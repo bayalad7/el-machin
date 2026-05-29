@@ -832,7 +832,7 @@ function selectPrep(el, val) {
   if (isPorPieza) { state.size = 'pieza'; }
 
   renderSabores(isAguachile || isTostiaguachile);
-  renderNiveles(isOpcional);
+  renderNiveles(true);
 
   // Para ceviche/tahitiana: pre-seleccionar "Sin picante" por defecto
   if (isOpcional) {
