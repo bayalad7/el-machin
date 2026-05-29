@@ -49,11 +49,12 @@
     gap: 10px;
     margin-bottom: 18px;
   }
-  .card-grid .opt-card:nth-child(1) { grid-column: span 3; }
-  .card-grid .opt-card:nth-child(2) { grid-column: span 3; }
+  .card-grid .opt-card:nth-child(1) { grid-column: span 2; }
+  .card-grid .opt-card:nth-child(2) { grid-column: span 2; }
   .card-grid .opt-card:nth-child(3) { grid-column: span 2; }
   .card-grid .opt-card:nth-child(4) { grid-column: span 2; }
   .card-grid .opt-card:nth-child(5) { grid-column: span 2; }
+  .card-grid .opt-card:nth-child(6) { grid-column: span 2; }
   .opt-card {
     position: relative;
     overflow: hidden;
@@ -114,6 +115,7 @@
   .opt-card[data-prep="Aguachile Botana"]  { --card-accent: #e8334a; }
   .opt-card[data-prep="Tahitiana"]         { --card-accent: #f5c518; }
   .opt-card[data-prep="Tostiaguachile"]    { --card-accent: #9b59b6; }
+  .opt-card[data-prep="Tacos Empanizados"] { --card-accent: #1e8bc3; }
 
   .marisco-row { display:flex; align-items:center; justify-content:space-between; background:#fff; border:2.5px solid var(--gris); border-radius:14px; padding:12px 14px; margin-bottom:10px; cursor:pointer; transition:all .18s; box-shadow:var(--sombra); }
   .marisco-row.selected { border-color:var(--verde); background:#f0fdf4; }
@@ -361,6 +363,13 @@
         <div class="sub">Con tostitos al gusto</div>
       </div>
     </div>
+    <div class="opt-card card-row2" data-prep="Tacos Empanizados" onclick="selectPrep(this,'Tacos Empanizados')">
+      <div class="opt-card-inner">
+        <span class="icon">🌮🍤</span>
+        <div class="label">Tacos Empanizados</div>
+        <div class="sub">Camarón o pescado crocante</div>
+      </div>
+    </div>
   </div>
 
   <!-- PICOR: siempre visible tras elegir preparado -->
@@ -602,6 +611,11 @@ const PRECIOS = {
     'Pulpo':                   {pieza:150},
     'Mixto':                   {pieza:150},
   },
+  'Tacos Empanizados': {
+    'Pescado empanizado':  {pieza:35},
+    'Camarón empanizado':  {pieza:35},
+    'Mixto':               {pieza:35},
+  },
 };
 
 const SABORES = {
@@ -768,6 +782,28 @@ document.getElementById('sizeOpts').innerHTML = SIZES.map(s =>
     <div class="s-icon">${s.icon}</div><div class="s-label">${s.label}</div>
   </div>`).join('');
 
+const MARISCOS_DEFAULT = [
+  {key:'Pescado',                 icon:'🐟', label:'Pescado'},
+  {key:'Camarón cocido en limón', icon:'🦐', label:'Camarón cocido en limón 🍋'},
+  {key:'Camarón cocido en agua',  icon:'🦐', label:'Camarón cocido en agua 💧'},
+  {key:'Pulpo',                   icon:'🐙', label:'Pulpo'},
+];
+const MARISCOS_POR_PREP = {
+  'Tacos Empanizados': [
+    {key:'Pescado empanizado',  icon:'🐟', label:'Pescado empanizado'},
+    {key:'Camarón empanizado',  icon:'🦐', label:'Camarón empanizado'},
+  ],
+};
+function renderMariscos(prep) {
+  const items = MARISCOS_POR_PREP[prep] || MARISCOS_DEFAULT;
+  document.getElementById('mariscosOpts').innerHTML = items.map(m =>
+    `<div class="marisco-row" onclick="toggleMarisco(this,'${m.key}')">
+      <div class="m-left"><span class="m-icon">${m.icon}</span><div><div class="m-name">${m.label}</div></div></div>
+      <div class="check-box">✓</div>
+    </div>`
+  ).join('');
+}
+
 function selectPrep(el, val) {
   document.querySelectorAll('#screenBuild .card-grid .opt-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
@@ -777,21 +813,25 @@ function selectPrep(el, val) {
   document.querySelectorAll('.marisco-row, .size-card').forEach(r=>r.classList.remove('selected'));
 
   const isAguachile   = val === 'Aguachile Mariposa' || val === 'Aguachile Botana';
-  const isOpcional    = val === 'Ceviche' || val === 'Tahitiana';
+  const isTacos          = val === 'Tacos Empanizados';
+  const isOpcional    = val === 'Ceviche' || val === 'Tahitiana' || isTacos;
   const isTostiaguachile = val === 'Tostiaguachile';
+  const isPorPieza    = isTostiaguachile || isTacos;
+
+  renderMariscos(val);
 
   document.getElementById('picorSection').style.display = 'block';
-  document.getElementById('saborWrap').style.display = isAguachile ? 'block' : 'none';
+  document.getElementById('saborWrap').style.display = (isAguachile || isTostiaguachile) ? 'block' : 'none';
   document.getElementById('tostosWrap').style.display = isTostiaguachile ? 'block' : 'none';
   document.getElementById('picorOpcionalBadge').style.display = isOpcional ? 'inline-block' : 'none';
 
-  // Tamaños: ocultar para Tostiaguachile (precio por pieza)
+  // Tamaños: ocultar para preparaciones con precio por pieza
   document.querySelector('.sec-title[data-section="tamano"]').style.display = 'block';
-  document.getElementById('tamanoTitleText').textContent = isTostiaguachile ? 'Cantidad' : 'Cantidad y tamaño';
-  document.getElementById('sizeOpts').style.display = isTostiaguachile ? 'none' : 'grid';
-  if (isTostiaguachile) { state.size = 'pieza'; }
+  document.getElementById('tamanoTitleText').textContent = isPorPieza ? 'Cantidad' : 'Cantidad y tamaño';
+  document.getElementById('sizeOpts').style.display = isPorPieza ? 'none' : 'grid';
+  if (isPorPieza) { state.size = 'pieza'; }
 
-  renderSabores(isAguachile);
+  renderSabores(isAguachile || isTostiaguachile);
   renderNiveles(isOpcional);
 
   // Para ceviche/tahitiana: pre-seleccionar "Sin picante" por defecto
@@ -915,17 +955,20 @@ function changeQty(delta) {
 function validate() {
   const isAguachile      = state.prep === 'Aguachile Mariposa' || state.prep === 'Aguachile Botana';
   const isTostiaguachile = state.prep === 'Tostiaguachile';
-  const saborOk   = isAguachile ? !!state.sabor : true;
+  const isTacos          = state.prep === 'Tacos Empanizados';
+  const saborOk   = (isAguachile || isTostiaguachile) ? !!state.sabor : true;
   const tostosOk  = isTostiaguachile ? !!state.tostosSabor : true;
   const nivelOk   = !!state.nivel;
-  const sizeOk    = isTostiaguachile ? true : !!state.size;
+  const sizeOk    = (isTostiaguachile || isTacos) ? true : !!state.size;
   document.getElementById('btnAddItem').disabled = !(state.prep && state.mariscos.length && sizeOk && saborOk && tostosOk && nivelOk);
 }
 
 function getUnitPrice() {
   const isTostiaguachile = state.prep === 'Tostiaguachile';
+  const isTacos          = state.prep === 'Tacos Empanizados';
+  const isPorPieza       = isTostiaguachile || isTacos;
   if (!state.prep || !state.mariscos.length) return 0;
-  if (!isTostiaguachile && !state.size) return 0;
+  if (!isPorPieza && !state.size) return 0;
   const table = PRECIOS[state.prep]; if (!table) return 0;
   const mixto = state.mariscos.length > 1;
   const tienePulpo = state.mariscos.includes('Pulpo');
@@ -935,7 +978,7 @@ function getUnitPrice() {
       const c = state.sabor.charAt(0).toUpperCase() + state.sabor.slice(1);
       key = mixto ? `${c} - Mixto` : `${c} - ${state.mariscos[0]}`;
     }
-  } else if (isTostiaguachile) {
+  } else if (isPorPieza) {
     key = mixto ? 'Mixto' : (tienePulpo ? 'Pulpo' : state.mariscos[0]);
     return table[key]?.pieza || 0;
   } else {
@@ -951,7 +994,7 @@ function addToCart() {
   const isTostiaguachile = state.prep === 'Tostiaguachile';
 
   // Display en carrito/resumen
-  const saborLabel  = isAguachile && state.sabor ? ` ${SABORES[state.sabor].emoji} ${SABORES[state.sabor].nombre}` : '';
+  const saborLabel  = (isAguachile || isTostiaguachile) && state.sabor ? ` ${SABORES[state.sabor].emoji} ${SABORES[state.sabor].nombre}` : '';
   const tostosLabel = isTostiaguachile && state.tostosSabor ? ` ${TOSTOS_SABORES[state.tostosSabor].emoji} Tostitos ${TOSTOS_SABORES[state.tostosSabor].nombre}` : '';
   const nivelLabel  = state.nivel === 'sin' ? ' 🚫 Sin picante'
                     : state.nivel ? ` 🌶️×${state.nivel}` : '';
@@ -960,13 +1003,13 @@ function addToCart() {
   // Para WhatsApp
   const saborEnMsg  = isAguachile && state.sabor
     ? `${SABORES[state.sabor].emoji} ${SABORES[state.sabor].nombre}`
-    : isTostiaguachile && state.tostosSabor
-      ? `${TOSTOS_SABORES[state.tostosSabor].emoji} Tostitos ${TOSTOS_SABORES[state.tostosSabor].nombre}`
+    : isTostiaguachile && state.sabor && state.tostosSabor
+      ? `${SABORES[state.sabor].emoji} ${SABORES[state.sabor].nombre} + ${TOSTOS_SABORES[state.tostosSabor].emoji} Tostitos ${TOSTOS_SABORES[state.tostosSabor].nombre}`
       : '';
   const nivelMsg = state.nivel === 'sin' ? 'Sin picante' : state.nivel ? `Nivel ${state.nivel}` : '';
   const picorMsg = nivelMsg;
 
-  const isTosti = state.prep === 'Tostiaguachile';
+  const isTosti = state.prep === 'Tostiaguachile' || state.prep === 'Tacos Empanizados';
   cart.push({
     prep: state.prep,
     picorDisplay,
