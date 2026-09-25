@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel El Machín</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde: #2ebd6b; --verde-dark: #1fa055;
+    --amarillo: #f5c518; --naranja: #ff6b2b; --naranja-dark: #e05520;
+    --rojo: #e8334a; --crema: #fff8ee; --cafe: #3d2010;
+    --gris: #f0ebe3; --texto-suave: #9a8070; --sombra: 0 4px 20px rgba(61,32,16,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', sans-serif; background: var(--crema); color: var(--cafe); min-height: 100vh; padding-bottom: 90px; }
+  button, input, select { font-family: inherit; font-size: inherit; color: inherit; }
+
+  header { background: linear-gradient(135deg,#e05520,#e8334a); padding: 12px 16px; position: sticky; top: 0; z-index: 50; box-shadow: 0 3px 16px rgba(232,51,74,.35); }
+  .header-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  header h1 { font-family: 'Fredoka One', cursive; font-size: 1.3rem; color: #fff; letter-spacing: .5px; }
+  .header-links { display: flex; gap: 8px; }
+  .header-links a, .header-links button { background: rgba(255,255,255,.2); color: #fff; border: none; border-radius: 10px; padding: 7px 12px; font-weight: 800; font-size: .8rem; text-decoration: none; cursor: pointer; }
+
+  .tabs { background: #fff; border-bottom: 2px solid var(--gris); position: sticky; top: 56px; z-index: 40; }
+  .tabs-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 4px; overflow-x: auto; padding: 8px 16px; scrollbar-width: thin; }
+  .tab { flex-shrink: 0; border: none; background: transparent; border-radius: 10px; padding: 8px 12px; font-weight: 800; font-size: .85rem; color: var(--texto-suave); cursor: pointer; white-space: nowrap; }
+  .tab.activa { background: var(--naranja); color: #fff; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 18px 16px; }
+  .sec-title { font-family: 'Fredoka One', cursive; font-size: 1.4rem; margin-bottom: 6px; }
+  .sec-desc { color: var(--texto-suave); font-size: .85rem; margin-bottom: 14px; line-height: 1.5; }
+  .panel { background: #fff; border-radius: 16px; box-shadow: var(--sombra); padding: 14px; margin-bottom: 16px; }
+
+  /* Login */
+  .login { max-width: 360px; margin: 60px auto; text-align: center; }
+  .login .icono { font-size: 3rem; }
+  .login h2 { font-family: 'Fredoka One', cursive; margin: 8px 0 16px; }
+  .login input { width: 100%; margin-bottom: 10px; }
+
+  .input, .tabla input, .tabla select { border: 2px solid var(--gris); border-radius: 10px; padding: 8px 10px; background: #fff; outline: none; transition: border .15s; }
+  .input:focus, .tabla input:focus, .tabla select:focus { border-color: var(--naranja); }
+  .btn { border: none; border-radius: 12px; padding: 10px 16px; font-weight: 800; cursor: pointer; transition: transform .1s; }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primario { background: linear-gradient(135deg,var(--verde),var(--verde-dark)); color: #fff; }
+  .btn-naranja { background: var(--naranja); color: #fff; }
+  .btn-claro { background: var(--gris); color: var(--cafe); }
+  .btn-borde { background: #fff; border: 2px dashed var(--naranja); color: var(--naranja); }
+  .btn-peligro { background: #fff0f0; color: var(--rojo); }
+  .btn-mini { padding: 5px 8px; border-radius: 8px; font-size: .8rem; }
+
+  /* Tablas editables */
+  .tabla-wrap { overflow-x: auto; border-radius: 12px; border: 2px solid var(--gris); background: #fff; }
+  .tabla { border-collapse: collapse; width: 100%; font-size: .85rem; }
+  .tabla th { background: var(--cafe); color: #fff; text-align: left; padding: 8px; font-weight: 800; white-space: nowrap; position: sticky; top: 0; }
+  .tabla th small { display: block; font-weight: 600; opacity: .7; font-size: .7rem; }
+  .tabla td { padding: 5px 6px; border-bottom: 1px solid var(--gris); vertical-align: middle; }
+  .tabla tr.inactivo td { opacity: .5; }
+  .tabla input, .tabla select { width: 100%; padding: 6px 8px; }
+  .tabla input[type=text] { min-width: 140px; }
+  .tabla select { min-width: 120px; }
+  .tabla input[type=number] { min-width: 85px; }
+  .tabla input[type=color] { padding: 2px; height: 34px; min-width: 50px; }
+  .tabla .acciones { white-space: nowrap; display: flex; gap: 4px; }
+  .barra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .barra label { font-weight: 800; font-size: .85rem; }
+
+  /* Barra de guardar */
+  .guardar-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 2px solid var(--gris); box-shadow: 0 -4px 20px rgba(0,0,0,.08); padding: 12px 16px; display: none; z-index: 60; }
+  .guardar-bar.visible { display: block; }
+  .guardar-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .guardar-inner span { font-weight: 800; color: var(--naranja-dark); }
+  .errores { background: #fff0f0; border: 2px solid #ffd0d0; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; color: var(--rojo); font-size: .85rem; }
+  .errores ul { margin: 6px 0 0 18px; }
+
+  /* Pedidos */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .stat { background: #fff; border-radius: 14px; box-shadow: var(--sombra); padding: 12px 14px; }
+  .stat .v { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: var(--naranja); }
+  .stat .l { font-size: .75rem; font-weight: 800; color: var(--texto-suave); }
+  .pedido { background: #fff; border-radius: 14px; box-shadow: var(--sombra); margin-bottom: 10px; border-left: 6px solid var(--naranja); }
+  .pedido.confirmado { border-left-color: var(--amarillo); }
+  .pedido.entregado { border-left-color: var(--verde); }
+  .pedido.cancelado { border-left-color: #bbb; opacity: .7; }
+  .pedido-top { display: flex; justify-content: space-between; gap: 10px; padding: 12px 14px; cursor: pointer; align-items: flex-start; }
+  .pedido-top .folio { font-weight: 800; font-size: .78rem; color: var(--texto-suave); }
+  .pedido-top .cliente { font-weight: 800; font-size: 1rem; }
+  .pedido-top .meta { font-size: .8rem; color: var(--texto-suave); margin-top: 2px; }
+  .pedido-top .total { font-family: 'Fredoka One', cursive; font-size: 1.2rem; color: var(--naranja); white-space: nowrap; text-align: right; }
+  .pedido-detalle { display: none; padding: 0 14px 14px; font-size: .85rem; border-top: 1px dashed var(--gris); }
+  .pedido.abierto .pedido-detalle { display: block; }
+  .pedido-detalle .linea { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--gris); }
+  .pedido-detalle .nota { color: var(--texto-suave); font-size: .78rem; }
+  .aviso { background: #fffbea; border: 2px solid var(--amarillo); border-radius: 10px; padding: 8px 10px; margin: 10px 0; font-weight: 700; color: #a07800; }
+  .chip { display: inline-block; background: var(--gris); border-radius: 8px; padding: 2px 8px; font-size: .72rem; font-weight: 800; margin-left: 4px; }
+  .vacio { text-align: center; padding: 40px 16px; color: var(--texto-suave); font-weight: 700; }
+
+  .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #1a1a1a; color: #fff; padding: 12px 20px; border-radius: 50px; font-size: .88rem; font-weight: 700; z-index: 999; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; max-width: calc(100vw - 32px); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .oculto { display: none !important; }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.1rem; }
+    .tabs { top: 52px; }
+    .pedido-top { flex-direction: column; }
+    .pedido-top .total { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <h1>🦐 Panel El Machín</h1>
+    <div class="header-links">
+      <a href="../" target="_blank">Ver app ↗</a>
+      <button id="btnSalir" class="oculto" onclick="salir()">Salir</button>
+    </div>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<div id="vistaLogin" class="login oculto">
+  <div class="icono">🔐</div>
+  <h2>Entrar al panel</h2>
+  <form onsubmit="entrar(event)">
+    <input class="input" type="password" id="password" placeholder="Contraseña" autocomplete="current-password" required>
+    <button class="btn btn-naranja" style="width:100%">Entrar</button>
+  </form>
+  <p id="loginError" class="sec-desc" style="margin-top:12px;color:var(--rojo)"></p>
+</div>
+
+<!-- PANEL -->
+<div id="vistaPanel" class="oculto">
+  <nav class="tabs"><div class="tabs-inner" id="tabs"></div></nav>
+  <main id="contenido"></main>
+</div>
+
+<div class="guardar-bar" id="guardarBar">
+  <div class="guardar-inner">
+    <span>✏️ Tienes cambios sin guardar</span>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-claro" onclick="descartar()">Descartar</button>
+      <button class="btn btn-primario" id="btnGuardar" onclick="guardarMenu()">💾 Guardar y publicar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '../api/admin.php';
+let csrf = null;
+let menu = null;            // copia en edición
+let menuOriginal = '';      // para detectar cambios
+let erroresServidor = [];
+let tabActual = 'pedidos';
+let filtroPrecios = '';
+let pedidos = [];
+let filtrosPedidos = null;
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dinero = n => '$' + Number(n || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const hoyISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const sumarDias = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+async function api(accion, {metodo = 'GET', datos, params = {}} = {}) {
+  const qs = new URLSearchParams({accion, ...params});
+  const r = await fetch(`${API}?${qs}`, {
+    method: metodo, credentials: 'same-origin',
+    headers: metodo === 'POST' ? {'Content-Type': 'application/json', 'X-CSRF': csrf || ''} : {},
+    body: datos ? JSON.stringify(datos) : undefined,
+  });
+  const j = await r.json().catch(() => ({ok: false, error: 'Respuesta inválida del servidor'}));
+  if (r.status === 401 && accion !== 'login') { mostrarLogin('Tu sesión expiró. Vuelve a entrar.'); throw new Error(j.error); }
+  return {...j, status: r.status};
+}
+
+// ── Sesión ───────────────────────────────────────────────────────────
+async function iniciar() {
+  const e = await api('estado');
+  if (e.autenticado) { csrf = e.csrf; await abrirPanel(); }
+  else mostrarLogin(e.configurado ? '' : 'Primero crea la contraseña en el servidor con: php api/crear-password.php');
+}
+
+function mostrarLogin(msg = '') {
+  document.getElementById('vistaPanel').classList.add('oculto');
+  document.getElementById('btnSalir').classList.add('oculto');
+  document.getElementById('guardarBar').classList.remove('visible');
+  document.getElementById('vistaLogin').classList.remove('oculto');
+  document.getElementById('loginError').textContent = msg;
+  document.getElementById('password').focus();
+}
+
+async function entrar(ev) {
+  ev.preventDefault();
+  const r = await api('login', {metodo: 'POST', datos: {password: document.getElementById('password').value}});
+  if (!r.ok) { document.getElementById('loginError').textContent = r.error; return; }
+  csrf = r.csrf;
+  document.getElementById('password').value = '';
+  await abrirPanel();
+}
+
+async function salir() {
+  if (hayCambios() && !confirm('Tienes cambios sin guardar. ¿Salir de todos modos?')) return;
+  await api('logout', {metodo: 'POST'});
+  menu = null; menuOriginal = '';
+  mostrarLogin('Sesión cerrada.');
+}
+
+async function abrirPanel() {
+  document.getElementById('vistaLogin').classList.add('oculto');
+  document.getElementById('vistaPanel').classList.remove('oculto');
+  document.getElementById('btnSalir').classList.remove('oculto');
+  await cargarMenu();
+  renderTabs();
+  mostrarTab(tabActual);
+}
+
+// ── Menú ─────────────────────────────────────────────────────────────
+async function cargarMenu() {
+  const r = await api('menu');
+  menu = r.menu;
+  menuOriginal = JSON.stringify(menu);
+  erroresServidor = [];
+  actualizarBarra();
+}
+
+function hayCambios() { return menu && JSON.stringify(menu) !== menuOriginal; }
+function actualizarBarra() { document.getElementById('guardarBar').classList.toggle('visible', !!hayCambios()); }
+
+async function guardarMenu() {
+  const btn = document.getElementById('btnGuardar');
+  btn.disabled = true;
+  try {
+    const r = await api('guardar_menu', {metodo: 'POST', datos: {menu}});
+    if (r.ok) {
+      menuOriginal = JSON.stringify(menu);
+      erroresServidor = [];
+      toast('✅ Menú guardado. La app ya muestra los cambios.');
+    } else {
+      erroresServidor = r.errores || [r.error];
+      toast('⚠️ No se guardó: revisa los errores');
+    }
+    mostrarTab(tabActual);
+  } finally { btn.disabled = false; actualizarBarra(); }
+}
+
+async function descartar() {
+  if (!confirm('¿Descartar todos los cambios sin guardar?')) return;
+  await cargarMenu();
+  mostrarTab(tabActual);
+}
+
+window.addEventListener('beforeunload', e => { if (hayCambios()) { e.preventDefault(); e.returnValue = ''; } });
+
+// ── Esquema de cada sección editable ─────────────────────────────────
+const SI_NO = ['si', 'no'];
+const grupos = (lista) => [...new Set((menu[lista] || []).map(x => x.grupo).filter(Boolean))];
+
+const SECCIONES = {
+  productos: {
+    titulo: '🍽️ Productos', desc: 'Tarjetas de la pantalla "¿Qué preparado?". <b>nombre</b> es el que sale en el carrito y en WhatsApp; si lo cambias, cambia también sus filas en Precios. Para ocultar un producto sin borrarlo pon activo = no.',
+    nueva: () => ({nombre: '', titulo: '', subtitulo: '', icono: '🍽️', color: '#ff6b2b', flujo: 'simple', cobro: 'pieza', sabores: '', tostitos: 'no', picor: 'no', mariscos: '', ancho: 'tercio', activo: 'si', orden: (menu.productos.length + 1)}),
+    columnas: [
+      {k: 'orden', t: 'number', ayuda: 'posición'},
+      {k: 'nombre', ayuda: 'interno'}, {k: 'titulo', ayuda: 'tarjeta'}, {k: 'subtitulo'},
+      {k: 'icono', ancho: 70}, {k: 'color', t: 'color'},
+      {k: 'flujo', t: 'select', ops: ['marisco', 'michelada', 'simple'], ayuda: 'cómo se arma'},
+      {k: 'cobro', t: 'select', ops: ['tamano', 'pieza']},
+      {k: 'mariscos', t: 'select', ops: () => ['', ...grupos('mariscos')], ayuda: 'grupo'},
+      {k: 'sabores', t: 'select', ops: () => ['', ...grupos('sabores')], ayuda: 'grupo'},
+      {k: 'tostitos', t: 'select', ops: SI_NO},
+      {k: 'picor', t: 'select', ops: ['obligatorio', 'opcional', 'no']},
+      {k: 'ancho', t: 'select', ops: ['tercio', 'medio', 'completo']},
+      {k: 'activo', t: 'select', ops: SI_NO},
+    ],
+  },
+  precios: {
+    titulo: '💲 Precios', desc: 'Un precio por producto + sabor + marisco. Usa <b>Mixto</b> para cuando el cliente combina 2 o más mariscos. Sabor vacío = aplica a todos los sabores. Los productos por tamaño usan kg / lt / medio; los de pieza usan pieza.',
+    nueva: () => ({producto: filtroPrecios || (menu.productos[0]?.nombre ?? ''), sabor: '', marisco: '', kg: '', lt: '', medio: '', pieza: ''}),
+    filtro: f => !filtroPrecios || f.producto === filtroPrecios,
+    columnas: [
+      {k: 'producto', t: 'select', ops: () => menu.productos.map(p => p.nombre)},
+      {k: 'sabor', t: 'select', ops: () => ['', ...new Set((menu.sabores || []).filter(s => s.grupo === 'aguachile').map(s => s.nombre))]},
+      {k: 'marisco', t: 'select', ops: () => ['', 'Mixto', ...new Set((menu.mariscos || []).map(m => m.clave))]},
+      {k: 'kg', t: 'money'}, {k: 'lt', t: 'money'}, {k: 'medio', t: 'money', ayuda: '½ litro'}, {k: 'pieza', t: 'money'},
+    ],
+  },
+  mariscos: {
+    titulo: '🦐 Mariscos', desc: 'Opciones de marisco. El <b>grupo</b> se asigna a cada producto (columna mariscos en Productos). solo_combinado = si impide pedirlo solo (como el pulpo).',
+    nueva: () => ({grupo: 'general', clave: '', icono: '🦐', etiqueta: '', solo_combinado: 'no', activo: 'si'}),
+    columnas: [{k: 'grupo'}, {k: 'clave', ayuda: 'sale en el pedido'}, {k: 'icono', ancho: 70}, {k: 'etiqueta', ayuda: 'texto visible'},
+               {k: 'solo_combinado', t: 'select', ops: SI_NO}, {k: 'activo', t: 'select', ops: SI_NO}],
+  },
+  sabores: {
+    titulo: '🎨 Sabores', desc: 'Sabores por grupo. El grupo <b>aguachile</b> es el que pide sabor en los productos con sabores = aguachile; <b>tostitos</b> es el sabor de tostitos.',
+    nueva: () => ({grupo: 'aguachile', clave: '', emoji: '', nombre: '', descripcion: ''}),
+    columnas: [{k: 'grupo'}, {k: 'clave', ayuda: 'sin espacios'}, {k: 'emoji', ancho: 70}, {k: 'nombre'}, {k: 'descripcion'}],
+  },
+  micheladas: {
+    titulo: '🍺 Micheladas', desc: 'Opciones de micheladas. El precio va en las filas de opción <b>tipo</b>. requiere_camaron = si pide el tipo de camarón.',
+    nueva: () => ({opcion: 'cerveza', clave: '', icono: '🍺', descripcion: '', precio: '', requiere_camaron: 'no', activo: 'si'}),
+    columnas: [{k: 'opcion', t: 'select', ops: ['cerveza', 'preparado', 'tipo', 'camaron']}, {k: 'clave', ayuda: 'nombre'}, {k: 'icono', ancho: 70},
+               {k: 'descripcion'}, {k: 'precio', t: 'money'}, {k: 'requiere_camaron', t: 'select', ops: SI_NO}, {k: 'activo', t: 'select', ops: SI_NO}],
+  },
+  extras: {
+    titulo: '🛍️ Extras y bebidas', desc: 'Complementos y refrescos que se agregan en el carrito. La <b>seccion</b> los agrupa bajo un título.',
+    nueva: () => ({nombre: '', icono: '🥤', precio: '', seccion: 'Complementos', activo: 'si'}),
+    columnas: [{k: 'nombre'}, {k: 'icono', ancho: 70}, {k: 'precio', t: 'money'}, {k: 'seccion'}, {k: 'activo', t: 'select', ops: SI_NO}],
+  },
+  operadores: {
+    titulo: '💼 Operadores', desc: 'Quién recibe los pedidos por WhatsApp. Número con 521 + 10 dígitos, sin espacios.',
+    nueva: () => ({nombre: '', icono: '🧑', whatsapp: '521', activo: 'si'}),
+    columnas: [{k: 'nombre'}, {k: 'icono', ancho: 70}, {k: 'whatsapp'}, {k: 'activo', t: 'select', ops: SI_NO}],
+  },
+  grupos: {
+    titulo: '🏷️ Grupos', desc: 'Opciones de "¿De dónde nos conociste?". La clave <b>otro</b> muestra un campo para escribir.',
+    nueva: () => ({clave: '', etiqueta: ''}),
+    columnas: [{k: 'clave'}, {k: 'etiqueta', ayuda: 'con emoji'}],
+  },
+  config: {
+    titulo: '⚙️ Ajustes', desc: 'Días de entrega (lunes…domingo separados por coma), horarios (formato 24 h separados por coma), hora de corte y número de respaldo.',
+    fija: true,
+    columnas: [{k: 'clave', t: 'lectura'}, {k: 'valor'}, {k: 'descripcion', t: 'lectura'}],
+  },
+  niveles: {
+    titulo: '🌶️ Niveles de picante', desc: 'La clave <b>sin</b> es "Sin picante".',
+    nueva: () => ({clave: '', icono: '🌶️', etiqueta: ''}),
+    columnas: [{k: 'clave'}, {k: 'icono'}, {k: 'etiqueta'}],
+  },
+  tamanos: {
+    titulo: '📦 Tamaños', desc: 'Las claves kg, lt y medio corresponden a las columnas de Precios; no las cambies.',
+    fija: true,
+    columnas: [{k: 'clave', t: 'lectura'}, {k: 'etiqueta'}, {k: 'plural'}, {k: 'icono'}],
+  },
+};
+
+const TABS = [
+  ['pedidos', '📋 Pedidos'], ['productos', '🍽️ Productos'], ['precios', '💲 Precios'], ['mariscos', '🦐 Mariscos'],
+  ['sabores', '🎨 Sabores'], ['micheladas', '🍺 Micheladas'], ['extras', '🛍️ Extras'], ['operadores', '💼 Operadores'],
+  ['grupos', '🏷️ Grupos'], ['ajustes', '⚙️ Ajustes'], ['respaldos', '🗂️ Respaldos'],
+];
+
+function renderTabs() {
+  document.getElementById('tabs').innerHTML = TABS.map(([k, l]) =>
+    `<button class="tab ${k === tabActual ? 'activa' : ''}" onclick="mostrarTab('${k}')">${l}</button>`).join('');
+}
+
+function mostrarTab(k) {
+  tabActual = k;
+  renderTabs();
+  const c = document.getElementById('contenido');
+  const errores = erroresServidor.length
+    ? `<div class="errores"><b>⚠️ No se guardó el menú. Corrige esto:</b><ul>${erroresServidor.map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : '';
+  if (k === 'pedidos') { c.innerHTML = ''; renderPedidos(); return; }
+  if (k === 'respaldos') { c.innerHTML = errores; renderRespaldos(); return; }
+  if (k === 'ajustes') { c.innerHTML = errores + ['config', 'niveles', 'tamanos'].map(htmlSeccion).join(''); return; }
+  c.innerHTML = errores + htmlSeccion(k);
+}
+
+// ── Tabla editable genérica ──────────────────────────────────────────
+function htmlSeccion(sec) {
+  const s = SECCIONES[sec];
+  const filas = menu[sec].map((f, i) => [f, i]).filter(([f]) => !s.filtro || s.filtro(f));
+  const extra = sec === 'precios' ? htmlFiltroPrecios() : '';
+  return `<section class="panel">
+    <div class="sec-title">${s.titulo}</div>
+    <p class="sec-desc">${s.desc}</p>
+    ${extra}
+    <div class="tabla-wrap"><table class="tabla">
+      <thead><tr>${s.columnas.map(c => `<th>${esc(c.k)}${c.ayuda ? `<small>${esc(c.ayuda)}</small>` : ''}</th>`).join('')}${s.fija ? '' : '<th></th>'}</tr></thead>
+      <tbody>${filas.map(([f, i]) => htmlFila(sec, f, i)).join('') || `<tr><td colspan="${s.columnas.length + 1}" class="vacio">Sin filas</td></tr>`}</tbody>
+    </table></div>
+    ${s.fija ? '' : `<div class="barra" style="margin-top:10px"><button class="btn btn-borde" onclick="agregarFila('${sec}')">➕ Agregar fila</button></div>`}
+  </section>`;
+}
+
+function htmlFila(sec, f, i) {
+  const s = SECCIONES[sec];
+  const inactivo = f.activo !== undefined && f.activo === 'no';
+  const celdas = s.columnas.map(c => {
+    const v = f[c.k] ?? '';
+    const on = `data-sec="${sec}" data-i="${i}" data-k="${c.k}" data-t="${c.t || 'text'}" oninput="editar(this)"`;
+    const estilo = c.ancho ? `style="width:${c.ancho}px;min-width:${c.ancho}px"` : '';
+    if (c.t === 'lectura') return `<td><b>${esc(v)}</b></td>`;
+    if (c.t === 'select') {
+      const ops = typeof c.ops === 'function' ? c.ops() : c.ops;
+      const lista = ops.includes(v) ? ops : [...ops, v];
+      return `<td><select ${on}>${lista.map(o => `<option value="${esc(o)}" ${o === v ? 'selected' : ''}>${esc(o) || '—'}</option>`).join('')}</select></td>`;
+    }
+    if (c.t === 'color') return `<td><input type="color" value="${esc(v || '#ff6b2b')}" ${on}></td>`;
+    if (c.t === 'money' || c.t === 'number') return `<td><input type="number" step="${c.t === 'money' ? '0.5' : '1'}" min="0" value="${esc(v)}" ${on} ${estilo}></td>`;
+    return `<td><input type="text" value="${esc(v)}" ${on} ${estilo}></td>`;
+  }).join('');
+  const acciones = s.fija ? '' : `<td><div class="acciones">
+      <button class="btn btn-claro btn-mini" title="Subir" onclick="moverFila('${sec}',${i},-1)">↑</button>
+      <button class="btn btn-claro btn-mini" title="Bajar" onclick="moverFila('${sec}',${i},1)">↓</button>
+      <button class="btn btn-peligro btn-mini" title="Eliminar" onclick="eliminarFila('${sec}',${i})">🗑️</button>
+    </div></td>`;
+  return `<tr class="${inactivo ? 'inactivo' : ''}">${celdas}${acciones}</tr>`;
+}
+
+function editar(el) {
+  const {sec, i, k, t} = el.dataset;
+  let v = el.value;
+  if (t === 'money' || t === 'number') v = v === '' ? '' : Number(v);
+  menu[sec][Number(i)][k] = v;
+  if (k === 'activo') el.closest('tr').classList.toggle('inactivo', v === 'no');
+  actualizarBarra();
+}
+
+function agregarFila(sec) {
+  menu[sec].push(SECCIONES[sec].nueva());
+  mostrarTab(tabActual);
+  actualizarBarra();
+  const filas = document.querySelectorAll('.tabla tbody tr');
+  filas[filas.length - 1]?.querySelector('input,select')?.focus();
+}
+
+function moverFila(sec, i, d) {
+  const j = i + d;
+  if (j < 0 || j >= menu[sec].length) return;
+  [menu[sec][i], menu[sec][j]] = [menu[sec][j], menu[sec][i]];
+  mostrarTab(tabActual); actualizarBarra();
+}
+
+function eliminarFila(sec, i) {
+  const f = menu[sec][i];
+  const nombre = f.nombre || f.clave || f.producto || `fila ${i + 1}`;
+  if (!confirm(`¿Eliminar "${nombre}"? Si solo quieres ocultarlo, usa activo = no.`)) return;
+  menu[sec].splice(i, 1);
+  mostrarTab(tabActual); actualizarBarra();
+}
+
+// Precios: filtro por producto y generador de filas faltantes
+function htmlFiltroPrecios() {
+  return `<div class="barra">
+    <label for="filtroPrecios">Producto:</label>
+    <select class="input" id="filtroPrecios" onchange="filtroPrecios=this.value;mostrarTab('precios')">
+      <option value="">Todos</option>
+      ${menu.productos.map(p => `<option ${p.nombre === filtroPrecios ? 'selected' : ''}>${esc(p.nombre)}</option>`).join('')}
+    </select>
+    ${filtroPrecios ? `<button class="btn btn-claro" onclick="generarPrecios()">🪄 Crear filas faltantes</button>` : ''}
+  </div>`;
+}
+
+function generarPrecios() {
+  const prod = menu.productos.find(p => p.nombre === filtroPrecios);
+  if (!prod) return;
+  if (prod.flujo === 'michelada') { toast('Las micheladas se cobran en la pestaña Micheladas'); return; }
+  const mariscos = prod.flujo === 'marisco'
+    ? [...menu.mariscos.filter(m => m.grupo === prod.mariscos && m.activo !== 'no').map(m => m.clave), 'Mixto'] : [''];
+  const sabores = prod.sabores ? menu.sabores.filter(s => s.grupo === prod.sabores).map(s => s.nombre) : [''];
+  let n = 0;
+  for (const sabor of sabores) for (const marisco of mariscos) {
+    const existe = menu.precios.some(f => f.producto === prod.nombre && f.marisco === marisco && (f.sabor === sabor || (!f.sabor && !prod.sabores)));
+    if (!existe) { menu.precios.push({producto: prod.nombre, sabor, marisco, kg: '', lt: '', medio: '', pieza: ''}); n++; }
+  }
+  toast(n ? `Se agregaron ${n} filas. Llena los precios.` : 'Ya existen todas las combinaciones');
+  mostrarTab('precios'); actualizarBarra();
+}
+
+// ── Pedidos ──────────────────────────────────────────────────────────
+function rangoRapido(tipo) {
+  const hoy = hoyISO();
+  const d = new Date(hoy + 'T12:00:00');
+  if (tipo === 'hoy') return [hoy, hoy];
+  if (tipo === 'semana') { const lunes = sumarDias(hoy, -((d.getDay() + 6) % 7)); return [lunes, sumarDias(lunes, 6)]; }
+  if (tipo === 'mes') return [hoy.slice(0, 8) + '01', hoy];
+  return [sumarDias(hoy, -30), hoy];
+}
+
+async function renderPedidos() {
+  if (!filtrosPedidos) { const [desde, hasta] = rangoRapido('semana'); filtrosPedidos = {por: 'entrega', desde, hasta, operador: '', estado: '', buscar: ''}; }
+  const f = filtrosPedidos;
+  const c = document.getElementById('contenido');
+  c.innerHTML = `<div class="sec-title">📋 Pedidos</div>
+    <div class="panel">
+      <div class="barra">
+        <label>Por fecha de</label>
+        <select class="input" onchange="filtrosPedidos.por=this.value;cargarPedidos()">
+          <option value="entrega" ${f.por === 'entrega' ? 'selected' : ''}>entrega</option>
+          <option value="registro" ${f.por === 'registro' ? 'selected' : ''}>registro</option>
+        </select>
+        <input class="input" type="date" value="${f.desde}" onchange="filtrosPedidos.desde=this.value;cargarPedidos()">
+        <span>a</span>
+        <input class="input" type="date" value="${f.hasta}" onchange="filtrosPedidos.hasta=this.value;cargarPedidos()">
+        <button class="btn btn-claro btn-mini" onclick="aplicarRango('hoy')">Hoy</button>
+        <button class="btn btn-claro btn-mini" onclick="aplicarRango('semana')">Esta semana</button>
+        <button class="btn btn-claro btn-mini" onclick="aplicarRango('mes')">Este mes</button>
+      </div>
+      <div class="barra" style="margin-bottom:0">
+        <select class="input" id="fOperador" onchange="filtrosPedidos.operador=this.value;pintarPedidos()"></select>
+        <select class="input" onchange="filtrosPedidos.estado=this.value;pintarPedidos()">
+          ${['', 'nuevo', 'confirmado', 'entregado', 'cancelado'].map(e => `<option value="${e}" ${f.estado === e ? 'selected' : ''}>${e || 'Todos los estados'}</option>`).join('')}
+        </select>
+        <input class="input" type="search" placeholder="Buscar cliente, teléfono o folio" value="${esc(f.buscar)}" oninput="filtrosPedidos.buscar=this.value;pintarPedidos()" style="flex:1;min-width:180px">
+        <button class="btn btn-naranja btn-mini" onclick="exportarCSV()">⬇️ CSV</button>
+      </div>
+    </div>
+    <div id="pedidosStats" class="stats"></div>
+    <div id="pedidosLista"><div class="vacio">⏳ Cargando...</div></div>`;
+  await cargarPedidos();
+}
+
+function aplicarRango(t) { [filtrosPedidos.desde, filtrosPedidos.hasta] = rangoRapido(t); renderPedidos(); }
+
+async function cargarPedidos() {
+  const f = filtrosPedidos;
+  const r = await api('pedidos', {params: {desde: f.desde, hasta: f.hasta, por: f.por}});
+  pedidos = r.pedidos || [];
+  const ops = [...new Set(pedidos.map(p => p.operador).filter(Boolean))];
+  const sel = document.getElementById('fOperador');
+  if (sel) sel.innerHTML = `<option value="">Todos los operadores</option>` + ops.map(o => `<option ${o === f.operador ? 'selected' : ''}>${esc(o)}</option>`).join('');
+  pintarPedidos();
+}
+
+function pedidosFiltrados() {
+  const f = filtrosPedidos;
+  const q = f.buscar.trim().toLowerCase();
+  return pedidos.filter(p =>
+    (!f.operador || p.operador === f.operador) &&
+    (!f.estado || p.estado === f.estado) &&
+    (!q || [p.folio, p.cliente.nombre, p.cliente.telefono].some(x => String(x).toLowerCase().includes(q))));
+}
+
+function pintarPedidos() {
+  const lista = pedidosFiltrados();
+  const validos = lista.filter(p => p.estado !== 'cancelado');
+  const total = validos.reduce((s, p) => s + Number(p.total_calculado || 0), 0);
+  const porEstado = e => lista.filter(p => p.estado === e).length;
+  document.getElementById('pedidosStats').innerHTML = `
+    <div class="stat"><div class="v">${lista.length}</div><div class="l">Pedidos</div></div>
+    <div class="stat"><div class="v">${dinero(total)}</div><div class="l">Total (sin cancelados, sin envío)</div></div>
+    <div class="stat"><div class="v">${porEstado('nuevo')}</div><div class="l">Nuevos por confirmar</div></div>
+    <div class="stat"><div class="v">${porEstado('entregado')}</div><div class="l">Entregados</div></div>`;
+  document.getElementById('pedidosLista').innerHTML = lista.length ? lista.map(htmlPedido).join('')
+    : '<div class="vacio">No hay pedidos en este rango.</div>';
+}
+
+function htmlPedido(p) {
+  const fechaReg = new Date(p.fecha_registro).toLocaleString('es-MX', {dateStyle: 'short', timeStyle: 'short'});
+  const entregaTxt = p.entrega === 'domicilio' ? '🛵 Domicilio' : '🏃 Recoger';
+  const articulos = p.articulos.map(a => `<div class="linea"><div>${esc(a.descripcion || a.producto)}${a.notas ? `<div class="nota">📝 ${esc(a.notas)}</div>` : ''}</div><b>${dinero(a.subtotal)}</b></div>`).join('');
+  const extras = p.extras.map(e => `<div class="linea"><div>${esc(e.nombre)}${e.cantidad > 1 ? ` ×${e.cantidad}` : ''}</div><b>${dinero(e.subtotal)}</b></div>`).join('');
+  const gps = p.gps ? ` · <a href="https://maps.google.com/?q=${p.gps.lat},${p.gps.lng}" target="_blank">Ver mapa ↗</a>` : '';
+  return `<div class="pedido ${esc(p.estado)}" id="p-${esc(p.folio)}">
+    <div class="pedido-top" onclick="this.parentElement.classList.toggle('abierto')">
+      <div>
+        <div class="folio">${esc(p.folio)} · registrado ${esc(fechaReg)}</div>
+        <div class="cliente">${esc(p.cliente.nombre)} <span class="chip">📱 ${esc(p.cliente.telefono)}</span></div>
+        <div class="meta">📅 ${esc(p.fecha_texto || p.fecha_entrega)} ⏰ ${esc(p.hora)} · ${entregaTxt} · 💼 ${esc(p.operador)}${p.grupo ? ' · ' + esc(p.grupo) : ''}</div>
+      </div>
+      <div class="total">${dinero(p.total_calculado)}${p.diferencia ? '<div class="chip" style="color:var(--rojo)">⚠️ revisar</div>' : ''}</div>
+    </div>
+    <div class="pedido-detalle">
+      ${p.diferencia ? `<div class="aviso">⚠️ El total que vio el cliente (${dinero(p.total_app)}) no coincide con los precios actuales (${dinero(p.total_calculado)}). Puede ser un cambio de precios reciente.</div>` : ''}
+      ${articulos}${extras}
+      ${p.entrega === 'domicilio' ? `<p style="margin-top:10px">📍 ${esc(p.direccion)}${p.referencia ? ` — ${esc(p.referencia)}` : ''}${gps}</p>` : ''}
+      <div class="barra" style="margin-top:12px;margin-bottom:0">
+        <label>Estado:</label>
+        <select class="input" onchange="cambiarEstado('${esc(p.folio)}', this.value)">
+          ${['nuevo', 'confirmado', 'entregado', 'cancelado'].map(e => `<option ${e === p.estado ? 'selected' : ''}>${e}</option>`).join('')}
+        </select>
+        <a class="btn btn-claro btn-mini" href="https://wa.me/${esc(String(p.cliente.telefono).replace(/\D/g, ''))}" target="_blank">💬 WhatsApp cliente</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function cambiarEstado(folio, estado) {
+  const r = await api('estado_pedido', {metodo: 'POST', datos: {folio, estado}});
+  if (!r.ok) { toast('⚠️ ' + r.error); return; }
+  const p = pedidos.find(x => x.folio === folio);
+  if (p) p.estado = estado;
+  const el = document.getElementById('p-' + folio);
+  if (el) el.className = `pedido ${estado} abierto`;
+  toast(`Pedido ${folio}: ${estado}`);
+}
+
+function exportarCSV() {
+  const lista = pedidosFiltrados();
+  const col = ['folio', 'fecha_registro', 'estado', 'cliente', 'telefono', 'operador', 'grupo', 'fecha_entrega', 'hora', 'entrega', 'direccion', 'articulos', 'extras', 'total'];
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const filas = lista.map(p => [p.folio, p.fecha_registro, p.estado, p.cliente.nombre, p.cliente.telefono, p.operador, p.grupo,
+    p.fecha_entrega, p.hora, p.entrega, p.direccion, p.articulos.map(a => a.descripcion || a.producto).join(' | '),
+    p.extras.map(e => `${e.nombre} x${e.cantidad}`).join(' | '), p.total_calculado].map(q).join(','));
+  const blob = new Blob(['﻿' + [col.join(','), ...filas].join('\r\n')], {type: 'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pedidos-${filtrosPedidos.desde}-a-${filtrosPedidos.hasta}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── Respaldos ────────────────────────────────────────────────────────
+async function renderRespaldos() {
+  const c = document.getElementById('contenido');
+  c.insertAdjacentHTML('beforeend', `<section class="panel"><div class="sec-title">🗂️ Respaldos del menú</div>
+    <p class="sec-desc">Cada vez que guardas se hace una copia del menú anterior (se guardan las últimas 60). Restaurar reemplaza el menú actual por esa copia; el actual también se respalda antes.</p>
+    <div id="respaldosLista"><div class="vacio">⏳ Cargando...</div></div></section>`);
+  const r = await api('respaldos');
+  const lista = r.respaldos || [];
+  document.getElementById('respaldosLista').innerHTML = lista.length
+    ? `<div class="tabla-wrap"><table class="tabla"><thead><tr><th>Fecha</th><th>Archivo</th><th></th></tr></thead><tbody>
+        ${lista.map(x => `<tr><td>${esc(new Date(x.fecha).toLocaleString('es-MX'))}</td><td>${esc(x.archivo)}</td>
+          <td><button class="btn btn-claro btn-mini" onclick="restaurar('${esc(x.archivo)}')">↩️ Restaurar</button></td></tr>`).join('')}
+      </tbody></table></div>`
+    : '<div class="vacio">Aún no hay respaldos. Se crean al guardar el menú.</div>';
+}
+
+async function restaurar(archivo) {
+  if (hayCambios()) { toast('Primero guarda o descarta tus cambios'); return; }
+  if (!confirm(`¿Restaurar el menú de ${archivo}? El menú actual se respalda antes.`)) return;
+  const r = await api('restaurar', {metodo: 'POST', datos: {archivo}});
+  if (!r.ok) { toast('⚠️ ' + r.error); return; }
+  await cargarMenu();
+  toast('✅ Menú restaurado');
+  mostrarTab('respaldos');
+}
+
+iniciar();
+</script>
+</body>
+</html>
