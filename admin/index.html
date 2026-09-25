@@ -99,6 +99,22 @@
   .chip { display: inline-block; background: var(--gris); border-radius: 8px; padding: 2px 8px; font-size: .72rem; font-weight: 800; margin-left: 4px; }
   .vacio { text-align: center; padding: 40px 16px; color: var(--texto-suave); font-weight: 700; }
 
+  /* Formularios (envío, clientes, tarifario) */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 10px; }
+  .campo label { display: block; font-size: .75rem; font-weight: 800; color: var(--texto-suave); margin-bottom: 3px; }
+  .campo .input { width: 100%; }
+  .campo small { display: block; font-size: .7rem; color: var(--texto-suave); margin-top: 3px; }
+  .check { display: flex; align-items: center; gap: 8px; font-weight: 800; cursor: pointer; }
+  .check input { width: 20px; height: 20px; accent-color: var(--naranja); }
+  .envio-box { background: #f7fbff; border: 2px solid #d6e9f8; border-radius: 12px; padding: 12px; margin-top: 12px; }
+  .envio-box h4, .sub-title { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 1.05rem; margin-bottom: 10px; }
+  .mensaje-rep { background: #fff; border: 1.5px dashed #b8d4ea; border-radius: 10px; padding: 10px; white-space: pre-wrap; font-size: .8rem; margin: 10px 0; font-family: inherit; }
+  .domicilio { border: 2px solid var(--gris); border-radius: 12px; padding: 10px; margin-bottom: 8px; background: #fffdf9; }
+  .cliente-card { background: #fff; border-radius: 14px; box-shadow: var(--sombra); margin-bottom: 10px; padding: 12px 14px; }
+  .cliente-card .top { display: flex; justify-content: space-between; gap: 10px; cursor: pointer; }
+  .chip-lluvia { background: #e8f3ff; color: #1e6fb5; }
+  .chip-lluvia.on { background: #1e8bc3; color: #fff; }
+
   .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #1a1a1a; color: #fff; padding: 12px 20px; border-radius: 50px; font-size: .88rem; font-weight: 700; z-index: 999; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; max-width: calc(100vw - 32px); }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .oculto { display: none !important; }
@@ -347,7 +363,7 @@ const SECCIONES = {
 };
 
 const TABS = [
-  ['pedidos', '📋 Pedidos'], ['productos', '🍽️ Productos'], ['precios', '💲 Precios'], ['mariscos', '🦐 Mariscos'],
+  ['pedidos', '📋 Pedidos'], ['clientes', '👥 Clientes'], ['envios', '🛵 Envíos'], ['productos', '🍽️ Productos'], ['precios', '💲 Precios'], ['mariscos', '🦐 Mariscos'],
   ['sabores', '🎨 Sabores'], ['micheladas', '🍺 Micheladas'], ['extras', '🛍️ Extras'], ['operadores', '💼 Operadores'],
   ['grupos', '🏷️ Grupos'], ['ajustes', '⚙️ Ajustes'], ['respaldos', '🗂️ Respaldos'],
 ];
@@ -364,6 +380,8 @@ function mostrarTab(k) {
   const errores = erroresServidor.length
     ? `<div class="errores"><b>⚠️ No se guardó el menú. Corrige esto:</b><ul>${erroresServidor.map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : '';
   if (k === 'pedidos') { c.innerHTML = ''; renderPedidos(); return; }
+  if (k === 'clientes') { c.innerHTML = ''; renderClientes(); return; }
+  if (k === 'envios') { c.innerHTML = ''; renderEnvios(); return; }
   if (k === 'respaldos') { c.innerHTML = errores; renderRespaldos(); return; }
   if (k === 'ajustes') { c.innerHTML = errores + ['config', 'niveles', 'tamanos'].map(htmlSeccion).join(''); return; }
   c.innerHTML = errores + htmlSeccion(k);
@@ -507,10 +525,13 @@ async function renderPedidos() {
         </select>
         <input class="input" type="search" placeholder="Buscar cliente, teléfono o folio" value="${esc(f.buscar)}" oninput="filtrosPedidos.buscar=this.value;pintarPedidos()" style="flex:1;min-width:180px">
         <button class="btn btn-naranja btn-mini" onclick="exportarCSV()">⬇️ CSV</button>
+        <button class="btn btn-mini chip-lluvia" id="btnLluvia" onclick="alternarLluvia()"></button>
       </div>
     </div>
     <div id="pedidosStats" class="stats"></div>
     <div id="pedidosLista"><div class="vacio">⏳ Cargando...</div></div>`;
+  await cargarEnvioCfg();
+  pintarBotonLluvia();
   await cargarPedidos();
 }
 
@@ -520,6 +541,7 @@ async function cargarPedidos() {
   const f = filtrosPedidos;
   const r = await api('pedidos', {params: {desde: f.desde, hasta: f.hasta, por: f.por}});
   pedidos = r.pedidos || [];
+  envioEdit = {};
   const ops = [...new Set(pedidos.map(p => p.operador).filter(Boolean))];
   const sel = document.getElementById('fOperador');
   if (sel) sel.innerHTML = `<option value="">Todos los operadores</option>` + ops.map(o => `<option ${o === f.operador ? 'selected' : ''}>${esc(o)}</option>`).join('');
@@ -532,17 +554,20 @@ function pedidosFiltrados() {
   return pedidos.filter(p =>
     (!f.operador || p.operador === f.operador) &&
     (!f.estado || p.estado === f.estado) &&
-    (!q || [p.folio, p.cliente.nombre, p.cliente.telefono].some(x => String(x).toLowerCase().includes(q))));
+    (!q || [p.folio, p.cliente.nombre, p.cliente.telefono].some(x => String(x).toLowerCase().includes(q))
+        || (q.replace(/\D/g, '').length >= 4 && telDigits(p.cliente.telefono).includes(q.replace(/\D/g, '')))));
 }
 
 function pintarPedidos() {
   const lista = pedidosFiltrados();
   const validos = lista.filter(p => p.estado !== 'cancelado');
   const total = validos.reduce((s, p) => s + Number(p.total_calculado || 0), 0);
+  const envios = validos.reduce((s, p) => s + Number(p.envio?.tarifa || 0), 0);
   const porEstado = e => lista.filter(p => p.estado === e).length;
   document.getElementById('pedidosStats').innerHTML = `
     <div class="stat"><div class="v">${lista.length}</div><div class="l">Pedidos</div></div>
-    <div class="stat"><div class="v">${dinero(total)}</div><div class="l">Total (sin cancelados, sin envío)</div></div>
+    <div class="stat"><div class="v">${dinero(total)}</div><div class="l">Comida y extras (sin cancelados)</div></div>
+    <div class="stat"><div class="v">${dinero(envios)}</div><div class="l">Envíos cobrados</div></div>
     <div class="stat"><div class="v">${porEstado('nuevo')}</div><div class="l">Nuevos por confirmar</div></div>
     <div class="stat"><div class="v">${porEstado('entregado')}</div><div class="l">Entregados</div></div>`;
   document.getElementById('pedidosLista').innerHTML = lista.length ? lista.map(htmlPedido).join('')
@@ -556,24 +581,27 @@ function htmlPedido(p) {
   const extras = p.extras.map(e => `<div class="linea"><div>${esc(e.nombre)}${e.cantidad > 1 ? ` ×${e.cantidad}` : ''}</div><b>${dinero(e.subtotal)}</b></div>`).join('');
   const gps = p.gps ? ` · <a href="https://maps.google.com/?q=${p.gps.lat},${p.gps.lng}" target="_blank">Ver mapa ↗</a>` : '';
   return `<div class="pedido ${esc(p.estado)}" id="p-${esc(p.folio)}">
-    <div class="pedido-top" onclick="this.parentElement.classList.toggle('abierto')">
+    <div class="pedido-top" onclick="abrirPedido('${esc(p.folio)}')">
       <div>
         <div class="folio">${esc(p.folio)} · registrado ${esc(fechaReg)}</div>
         <div class="cliente">${esc(p.cliente.nombre)} <span class="chip">📱 ${esc(p.cliente.telefono)}</span></div>
-        <div class="meta">📅 ${esc(p.fecha_texto || p.fecha_entrega)} ⏰ ${esc(p.hora)} · ${entregaTxt} · 💼 ${esc(p.operador)}${p.grupo ? ' · ' + esc(p.grupo) : ''}</div>
+        <div class="meta">📅 ${esc(p.fecha_texto || p.fecha_entrega)} ⏰ ${esc(p.hora)} · ${entregaTxt}${p.forma_pago ? ` · ${p.forma_pago === 'transferencia' ? '🏦 Transferencia' : '💵 Efectivo'}` : ''} · 💼 ${esc(p.operador)}${p.grupo ? ' · ' + esc(p.grupo) : ''}</div>
       </div>
-      <div class="total">${dinero(p.total_calculado)}${p.diferencia ? '<div class="chip" style="color:var(--rojo)">⚠️ revisar</div>' : ''}</div>
+      <div class="total">${dinero(p.total_final ?? p.total_calculado)}
+        ${p.envio ? `<div class="chip">🛵 incl. envío ${dinero(p.envio.tarifa)}</div>` : p.entrega === 'domicilio' ? '<div class="chip">🛵 envío pendiente</div>' : ''}
+        ${p.diferencia ? '<div class="chip" style="color:var(--rojo)">⚠️ revisar</div>' : ''}</div>
     </div>
     <div class="pedido-detalle">
       ${p.diferencia ? `<div class="aviso">⚠️ El total que vio el cliente (${dinero(p.total_app)}) no coincide con los precios actuales (${dinero(p.total_calculado)}). Puede ser un cambio de precios reciente.</div>` : ''}
       ${articulos}${extras}
-      ${p.entrega === 'domicilio' ? `<p style="margin-top:10px">📍 ${esc(p.direccion)}${p.referencia ? ` — ${esc(p.referencia)}` : ''}${gps}</p>` : ''}
+      ${p.entrega === 'domicilio' ? `<p style="margin-top:10px">📍 ${esc(p.direccion)}${p.referencia ? ` — ${esc(p.referencia)}` : ''}${gps}</p>
+        <div class="envio-box" id="envio-${esc(p.folio)}"><div class="vacio" style="padding:10px">⏳ Cargando envío...</div></div>` : ''}
       <div class="barra" style="margin-top:12px;margin-bottom:0">
         <label>Estado:</label>
         <select class="input" onchange="cambiarEstado('${esc(p.folio)}', this.value)">
           ${['nuevo', 'confirmado', 'entregado', 'cancelado'].map(e => `<option ${e === p.estado ? 'selected' : ''}>${e}</option>`).join('')}
         </select>
-        <a class="btn btn-claro btn-mini" href="https://wa.me/${esc(String(p.cliente.telefono).replace(/\D/g, ''))}" target="_blank">💬 WhatsApp cliente</a>
+        <a class="btn btn-claro btn-mini" href="https://wa.me/52${telDigits(p.cliente.telefono)}" target="_blank">💬 WhatsApp cliente</a>
       </div>
     </div>
   </div>`;
@@ -591,17 +619,370 @@ async function cambiarEstado(folio, estado) {
 
 function exportarCSV() {
   const lista = pedidosFiltrados();
-  const col = ['folio', 'fecha_registro', 'estado', 'cliente', 'telefono', 'operador', 'grupo', 'fecha_entrega', 'hora', 'entrega', 'direccion', 'articulos', 'extras', 'total'];
+  const col = ['folio', 'fecha_registro', 'estado', 'cliente', 'telefono', 'operador', 'grupo', 'fecha_entrega', 'hora', 'entrega', 'direccion', 'articulos', 'extras', 'total_comida', 'envio', 'km', 'lluvia', 'forma_pago', 'total_con_envio'];
   const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const filas = lista.map(p => [p.folio, p.fecha_registro, p.estado, p.cliente.nombre, p.cliente.telefono, p.operador, p.grupo,
     p.fecha_entrega, p.hora, p.entrega, p.direccion, p.articulos.map(a => a.descripcion || a.producto).join(' | '),
-    p.extras.map(e => `${e.nombre} x${e.cantidad}`).join(' | '), p.total_calculado].map(q).join(','));
+    p.extras.map(e => `${e.nombre} x${e.cantidad}`).join(' | '), p.total_calculado,
+    p.envio?.tarifa ?? '', p.envio?.km ?? '', p.envio ? (p.envio.lluvia ? 'si' : 'no') : '', p.envio?.forma_pago ?? '',
+    p.total_final ?? p.total_calculado].map(q).join(','));
   const blob = new Blob(['﻿' + [col.join(','), ...filas].join('\r\n')], {type: 'text/csv;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `pedidos-${filtrosPedidos.desde}-a-${filtrosPedidos.hasta}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+// ── Envío de pedidos a domicilio ─────────────────────────────────────
+// Tarifario: base hasta base_km y precio_km_extra por cada km adicional (o fracción).
+// Mismo cálculo que calcular_tarifa() en api/comun.php.
+let envioCfg = null;
+let envioEdit = {};          // folio -> formulario de envío en edición
+const clientesCache = {};    // teléfono (10 dígitos) -> cliente del catálogo
+
+const telDigits = t => String(t || '').replace(/\D/g, '').slice(-10);
+const monto = n => Number(n || 0).toLocaleString('es-MX', {maximumFractionDigits: 2});
+const hora12 = h => { if (!h) return ''; const [H, M] = h.split(':').map(Number); return `${H % 12 || 12}:${String(M).padStart(2, '0')} ${H >= 12 ? 'PM' : 'AM'}`; };
+const linkMapa = g => g ? `https://maps.google.com/?q=${g.lat},${g.lng}` : '';
+const gpsTexto = g => g ? `${g.lat}, ${g.lng}` : '';
+function parseGps(txt) {
+  const m = String(txt).match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+  return m ? {lat: Number(m[1]), lng: Number(m[2])} : null;
+}
+
+async function cargarEnvioCfg() {
+  if (!envioCfg) envioCfg = (await api('envio')).config;
+}
+
+function kmEstimado(gps) {
+  if (!gps || !envioCfg) return null;
+  const r = envioCfg.restaurante, rad = Math.PI / 180;
+  const dLat = (gps.lat - r.lat) * rad, dLng = (gps.lng - r.lng) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(r.lat * rad) * Math.cos(gps.lat * rad) * Math.sin(dLng / 2) ** 2;
+  const km = 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h))) * Number(envioCfg.factor_calles || 1);
+  return Math.round(km * 10) / 10;
+}
+
+function tarifaEnvio(km, lluvia, cfg = envioCfg) {
+  const t = cfg[lluvia ? 'lluvia' : 'normal'];
+  const extra = Math.max(0, Math.ceil(Math.round((Number(km) - Number(t.base_km)) * 100) / 100));
+  return Number(t.base_precio) + extra * Number(t.precio_km_extra);
+}
+
+// Efectivo: el repartidor adelanta la comida y le cobra al cliente comida + envío.
+// Transferencia: el cliente nos paga todo a nosotros y nosotros le pagamos el envío al repartidor,
+// así que el repartidor no paga ni cobra nada.
+function recalcularMontos(e, comida) {
+  e.ganancia = e.tarifa;
+  if (e.forma_pago === 'transferencia') { e.repartidor_paga = 0; e.cliente_paga = 0; }
+  else { e.repartidor_paga = comida; e.cliente_paga = comida + e.tarifa; }
+}
+
+function pintarBotonLluvia() {
+  const b = document.getElementById('btnLluvia');
+  if (!b || !envioCfg) return;
+  b.classList.toggle('on', !!envioCfg.lluvia_activa);
+  b.textContent = envioCfg.lluvia_activa ? '☔ Lloviendo: sí' : '🌤️ Lloviendo: no';
+  b.title = 'Tarifa que se propone en los envíos nuevos';
+}
+
+async function alternarLluvia() {
+  const r = await api('guardar_envio', {metodo: 'POST', datos: {config: {...envioCfg, lluvia_activa: !envioCfg.lluvia_activa}}});
+  if (!r.ok) { toast('⚠️ ' + r.error); return; }
+  envioCfg = r.config;
+  pintarBotonLluvia();
+  toast(envioCfg.lluvia_activa ? '☔ Se propondrá la tarifa de lluvia' : '🌤️ Se propondrá la tarifa normal');
+}
+
+async function abrirPedido(folio) {
+  const el = document.getElementById('p-' + folio);
+  el.classList.toggle('abierto');
+  const p = pedidos.find(x => x.folio === folio);
+  if (!el.classList.contains('abierto') || p?.entrega !== 'domicilio') return;
+  if (envioEdit[folio]) pintarEnvio(folio);
+  else await iniciarEnvio(p);
+}
+
+async function obtenerCliente(tel) {
+  if (!(tel in clientesCache)) clientesCache[tel] = (await api('cliente', {params: {telefono: tel}})).cliente;
+  return clientesCache[tel];
+}
+
+async function iniciarEnvio(p) {
+  await cargarEnvioCfg();
+  const cli = await obtenerCliente(telDigits(p.cliente.telefono));
+  const domId = p.envio?.domicilio_id || p.cliente.domicilio_id || '';
+  const dom = cli?.domicilios?.find(d => d.id === domId);
+  const gps = dom?.gps || p.gps;
+  if (p.envio) {
+    envioEdit[p.folio] = {...p.envio, gps};
+  } else {
+    const e = {domicilio_id: dom ? domId : '', para: dom?.direccion || p.direccion, km: kmEstimado(gps) ?? 0,
+               lluvia: !!envioCfg.lluvia_activa, forma_pago: p.forma_pago || 'efectivo', listo: p.hora || '', gps, _sucio: true};
+    e.tarifa = tarifaEnvio(e.km, e.lluvia);
+    recalcularMontos(e, Number(p.total_calculado));
+    envioEdit[p.folio] = e;
+  }
+  pintarEnvio(p.folio);
+}
+
+function mensajeRepartidor(folio) {
+  const e = envioEdit[folio];
+  return `${envioCfg.restaurante.mapa}\n\n🐙EL MACHÍN🦐\n\n🚨PEDIDO DISPONIBLE🚨\n\n📍PARA: ${e.para}\n\n` +
+    `💸 REPARTIDOR PAGA: $${monto(e.repartidor_paga)}\n\n💵 CLIENTE PAGA: $${monto(e.cliente_paga)}\n\n` +
+    `💰GANANCIA ENVÍO: $${monto(e.ganancia)}\n\n⏰ PEDIDO LISTO: ${hora12(e.listo)}`;
+}
+
+function mensajeCliente(p, e) {
+  const comida = Number(p.total_calculado);
+  return `Hola ${p.cliente.nombre} 👋\nEste es el total de tu pedido ${p.folio} de El Machín:\n\n` +
+    `🍽️ Pedido: $${monto(comida)}\n🛵 Envío: $${monto(e.tarifa)}\n💰 Total: $${monto(comida + Number(e.tarifa))}\n\n` +
+    (e.forma_pago === 'transferencia' ? `🏦 Total a transferir: $${monto(comida + Number(e.tarifa))}. Al repartidor no le pagas nada.`
+                                      : `💵 Pagas al repartidor en efectivo: $${monto(e.cliente_paga)}`);
+}
+
+function pintarEnvio(folio) {
+  const box = document.getElementById('envio-' + folio);
+  if (!box) return;
+  const p = pedidos.find(x => x.folio === folio), e = envioEdit[folio];
+  const doms = clientesCache[telDigits(p.cliente.telefono)]?.domicilios || [];
+  const est = kmEstimado(e.gps);
+  const f = esc(folio);
+  const on = (campo, modo) => `data-folio="${f}" data-campo="${campo}" onchange="editarEnvio(this,'${modo}')"`;
+  const num = (campo, modo, paso = '0.5') => `<input class="input" type="number" step="${paso}" min="0" value="${e[campo]}" ${on(campo, modo)}>`;
+  const sinKmExtra = !Number(envioCfg[e.lluvia ? 'lluvia' : 'normal'].precio_km_extra);
+  box.innerHTML = `<h4>🛵 Envío ${e._sucio ? '<span class="chip" style="color:var(--naranja-dark)">sin guardar</span>' : '<span class="chip">✅ guardado</span>'}</h4>
+    <div class="form-grid">
+      <div class="campo" style="grid-column:1/-1"><label>Domicilio del cliente</label>
+        <select class="input" ${on('domicilio_id', 'domicilio')}>
+          <option value="">Dirección escrita en el pedido</option>
+          ${doms.map(d => `<option value="${esc(d.id)}" ${d.id === e.domicilio_id ? 'selected' : ''}>${d.alias ? esc(d.alias) + ' — ' : ''}${esc(d.direccion)}</option>`).join('')}
+        </select></div>
+      <div class="campo" style="grid-column:1/-1"><label>📍 PARA (colonia, calle y número)</label>
+        <input class="input" value="${esc(e.para)}" ${on('para', 'nada')}></div>
+      <div class="campo"><label>Distancia (km)</label>${num('km', 'tarifa', '0.1')}
+        <small>${est != null ? `Estimado ${est} km (línea recta × ${envioCfg.factor_calles})${e.gps ? ` · <a href="${linkMapa(e.gps)}" target="_blank">mapa ↗</a>` : ''}` : 'Sin GPS: escribe los km'}</small></div>
+      <div class="campo"><label>Tarifario</label>
+        <label class="check"><input type="checkbox" ${e.lluvia ? 'checked' : ''} ${on('lluvia', 'tarifa')}> ☔ Lluvia</label></div>
+      <div class="campo"><label>Pago del cliente</label>
+        <select class="input" ${on('forma_pago', 'montos')}>
+          <option value="efectivo" ${e.forma_pago === 'efectivo' ? 'selected' : ''}>💵 Efectivo</option>
+          <option value="transferencia" ${e.forma_pago === 'transferencia' ? 'selected' : ''}>🏦 Transferencia (nosotros pagamos al repartidor)</option>
+        </select></div>
+      <div class="campo"><label>⏰ Pedido listo</label><input class="input" type="time" value="${esc(e.listo)}" ${on('listo', 'nada')}></div>
+    </div>
+    <div class="form-grid">
+      <div class="campo"><label>🛵 Costo de envío</label>${num('tarifa', 'montos')}
+        <small>Tarifario: ${dinero(tarifaEnvio(e.km, e.lluvia))}${sinKmExtra ? ' · ⚠️ configura el costo por km extra en 🛵 Envíos' : ''}</small></div>
+      <div class="campo"><label>💸 Repartidor paga</label>${num('repartidor_paga', 'nada')}</div>
+      <div class="campo"><label>💵 Cliente paga</label>${num('cliente_paga', 'nada')}</div>
+      <div class="campo"><label>💰 Ganancia envío</label>${num('ganancia', 'nada')}</div>
+    </div>
+    <div class="mensaje-rep">${esc(mensajeRepartidor(folio))}</div>
+    <div class="barra" style="margin-bottom:0">
+      <button class="btn btn-primario btn-mini" onclick="guardarEnvio('${f}')">💾 Guardar envío y total</button>
+      <button class="btn btn-claro btn-mini" onclick="copiarTexto(mensajeRepartidor('${f}'))">📋 Copiar mensaje</button>
+      <a class="btn btn-claro btn-mini" target="_blank" href="https://wa.me/?text=${encodeURIComponent(mensajeRepartidor(folio))}">🛵 Enviar al repartidor</a>
+      <a class="btn btn-claro btn-mini" target="_blank" href="https://wa.me/52${telDigits(p.cliente.telefono)}?text=${encodeURIComponent(mensajeCliente(p, e))}">💬 Avisar total al cliente</a>
+    </div>`;
+}
+
+// modo: domicilio (cambia dirección y km) → tarifa (recalcula tarifa) → montos (recalcula montos); nada = solo guarda el valor
+function editarEnvio(el, modo) {
+  const {folio, campo} = el.dataset;
+  const e = envioEdit[folio], p = pedidos.find(x => x.folio === folio);
+  let v = el.type === 'checkbox' ? el.checked : el.value;
+  if (['km', 'tarifa', 'repartidor_paga', 'cliente_paga', 'ganancia'].includes(campo)) v = Number(v) || 0;
+  e[campo] = v;
+  e._sucio = true;
+  if (modo === 'domicilio') {
+    const d = clientesCache[telDigits(p.cliente.telefono)]?.domicilios?.find(x => x.id === v);
+    e.para = d ? d.direccion : p.direccion;
+    e.gps = d ? d.gps : p.gps;
+    const km = kmEstimado(e.gps);
+    if (km != null) e.km = km;
+    modo = 'tarifa';
+  }
+  if (modo === 'tarifa') { e.tarifa = tarifaEnvio(e.km, e.lluvia); modo = 'montos'; }
+  if (modo === 'montos') recalcularMontos(e, Number(p.total_calculado));
+  pintarEnvio(folio);
+}
+
+async function guardarEnvio(folio) {
+  const {gps, _sucio, ...envio} = envioEdit[folio];
+  const r = await api('envio_pedido', {metodo: 'POST', datos: {folio, envio}});
+  if (!r.ok) { toast('⚠️ ' + r.error); return; }
+  const p = pedidos.find(x => x.folio === folio);
+  p.envio = r.envio; p.total_final = r.total_final;
+  envioEdit[folio] = {...r.envio, gps};
+  pintarPedidos();
+  document.getElementById('p-' + folio)?.classList.add('abierto');
+  pintarEnvio(folio);
+  toast(`✅ Envío guardado. Total del pedido: ${dinero(r.total_final)}`);
+}
+
+async function copiarTexto(texto) {
+  try { await navigator.clipboard.writeText(texto); }
+  catch {
+    const t = document.createElement('textarea');
+    t.value = texto; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
+  }
+  toast('📋 Mensaje copiado');
+}
+
+// ── Tarifario (pestaña 🛵 Envíos) ────────────────────────────────────
+let cfgEdit = null;
+
+async function renderEnvios() {
+  await cargarEnvioCfg();
+  cfgEdit = structuredClone(envioCfg);
+  pintarEnvios();
+}
+
+function pintarEnvios() {
+  const c = cfgEdit;
+  const campoT = (t, k, label, paso = '1') => `<div class="campo"><label>${label}</label>
+    <input class="input" type="number" min="0" step="${paso}" value="${c[t][k]}" onchange="cfgEdit.${t}.${k}=Number(this.value)||0;pintarEnvios()"></div>`;
+  const ejemplo = [3, 5, 6, 8, 10, 12];
+  document.getElementById('contenido').innerHTML = `
+    <div class="sec-title">🛵 Envíos a domicilio</div>
+    <p class="sec-desc">Tarifario del repartidor: precio base hasta cierta distancia y un costo por cada km adicional (se cobra el km completo aunque sea fracción). Hay un tarifario normal y otro para lluvia.</p>
+    <section class="panel">
+      <div class="sub-title">🌤️ Tarifa normal</div>
+      <div class="form-grid">${campoT('normal', 'base_km', 'Km incluidos en la base', '0.5')}${campoT('normal', 'base_precio', 'Precio base ($)', '0.5')}${campoT('normal', 'precio_km_extra', 'Costo por km extra ($)', '0.5')}</div>
+      <div class="sub-title">☔ Tarifa con lluvia</div>
+      <div class="form-grid">${campoT('lluvia', 'base_km', 'Km incluidos en la base', '0.5')}${campoT('lluvia', 'base_precio', 'Precio base ($)', '0.5')}${campoT('lluvia', 'precio_km_extra', 'Costo por km extra ($)', '0.5')}</div>
+      <label class="check" style="margin:6px 0 12px"><input type="checkbox" ${c.lluvia_activa ? 'checked' : ''} onchange="cfgEdit.lluvia_activa=this.checked"> ☔ Está lloviendo (proponer tarifa de lluvia en los envíos nuevos)</label>
+      <div class="tabla-wrap" style="max-height:none"><table class="tabla"><thead><tr><th>Distancia</th>${ejemplo.map(k => `<th>${k} km</th>`).join('')}</tr></thead><tbody>
+        <tr><td><b>Normal</b></td>${ejemplo.map(k => `<td>${dinero(tarifaEnvio(k, false, c))}</td>`).join('')}</tr>
+        <tr><td><b>Lluvia</b></td>${ejemplo.map(k => `<td>${dinero(tarifaEnvio(k, true, c))}</td>`).join('')}</tr>
+      </tbody></table></div>
+    </section>
+    <section class="panel">
+      <div class="sub-title">📍 Ubicación del restaurante</div>
+      <div class="form-grid">
+        <div class="campo" style="grid-column:1/-1"><label>Enlace de Google Maps (primera línea del mensaje al repartidor)</label>
+          <input class="input" value="${esc(c.restaurante.mapa)}" onchange="cfgEdit.restaurante.mapa=this.value.trim()"></div>
+        <div class="campo"><label>Coordenadas (lat, lng)</label>
+          <input class="input" value="${esc(gpsTexto(c.restaurante))}" onchange="const g=parseGps(this.value); if(g){Object.assign(cfgEdit.restaurante,g)} else {toast('Formato: 19.1273, -104.3460')}">
+          <small>Se usan para estimar los km a cada domicilio.</small></div>
+        <div class="campo"><label>Factor de calles</label>
+          <input class="input" type="number" min="1" max="3" step="0.05" value="${c.factor_calles}" onchange="cfgEdit.factor_calles=Number(this.value)||1">
+          <small>La distancia en línea recta se multiplica por este número para aproximar el recorrido por calles.</small></div>
+      </div>
+    </section>
+    <button class="btn btn-primario" onclick="guardarTarifario()">💾 Guardar tarifario</button>`;
+}
+
+async function guardarTarifario() {
+  const r = await api('guardar_envio', {metodo: 'POST', datos: {config: cfgEdit}});
+  if (!r.ok) { toast('⚠️ ' + r.error); return; }
+  envioCfg = r.config; cfgEdit = structuredClone(envioCfg);
+  envioEdit = {};
+  pintarEnvios();
+  toast('✅ Tarifario guardado');
+}
+
+// ── Clientes ─────────────────────────────────────────────────────────
+let clientes = [];
+let clienteAbierto = null;   // teléfono del cliente en edición, o 'nuevo'
+let clienteEdit = null;
+let buscarCliente = '';
+
+async function renderClientes() {
+  document.getElementById('contenido').innerHTML = `
+    <div class="sec-title">👥 Clientes</div>
+    <p class="sec-desc">Se registran solos con cada pedido (por teléfono) y guardan cada domicilio nuevo. Aquí puedes corregir datos, ponerle nombre a cada domicilio (ej. <i>Casa de mamá</i>) y agregar su ubicación GPS para estimar el envío.</p>
+    <div class="panel"><div class="barra" style="margin-bottom:0">
+      <input class="input" type="search" placeholder="Buscar nombre, teléfono o dirección" value="${esc(buscarCliente)}" oninput="buscarCliente=this.value;pintarClientes()" style="flex:1;min-width:200px">
+      <button class="btn btn-naranja btn-mini" onclick="nuevoCliente()">➕ Nuevo cliente</button>
+    </div></div>
+    <div id="clientesLista"><div class="vacio">⏳ Cargando...</div></div>`;
+  clientes = (await api('clientes')).clientes || [];
+  pintarClientes();
+}
+
+function pintarClientes() {
+  const q = buscarCliente.trim().toLowerCase();
+  const lista = clientes.filter(c => !q || [c.nombre, c.telefono, ...c.domicilios.map(d => `${d.alias} ${d.direccion}`)]
+    .some(x => String(x).toLowerCase().includes(q)));
+  const nuevo = clienteAbierto === 'nuevo' ? `<div class="cliente-card">${htmlEditorCliente()}</div>` : '';
+  document.getElementById('clientesLista').innerHTML = nuevo + (lista.map(c => `<div class="cliente-card">
+      ${c.telefono === clienteAbierto ? htmlEditorCliente() : `<div class="top" onclick="abrirCliente('${esc(c.telefono)}')">
+        <div><div class="cliente">${esc(c.nombre)} <span class="chip">📱 ${esc(c.telefono)}</span></div>
+          <div class="meta">🏠 ${c.domicilios.length} domicilio(s) · 🧾 ${c.total_pedidos || 0} pedido(s)${c.ultimo_pedido ? ' · último ' + esc(new Date(c.ultimo_pedido).toLocaleDateString('es-MX')) : ''}</div></div>
+        <span class="chip">✏️ Editar</span></div>`}
+    </div>`).join('') || (nuevo ? '' : '<div class="vacio">No hay clientes todavía. Se agregan solos con cada pedido.</div>'));
+}
+
+function abrirCliente(tel) {
+  clienteAbierto = tel;
+  clienteEdit = structuredClone(clientes.find(c => c.telefono === tel));
+  pintarClientes();
+}
+
+function nuevoCliente() {
+  clienteAbierto = 'nuevo';
+  clienteEdit = {telefono: '', nombre: '', grupo: '', notas: '', domicilios: []};
+  pintarClientes();
+}
+
+function cerrarCliente() { clienteAbierto = null; clienteEdit = null; pintarClientes(); }
+
+function htmlEditorCliente() {
+  const c = clienteEdit;
+  const campo = (k, label, ancho = '') => `<div class="campo" ${ancho}><label>${label}</label>
+    <input class="input" value="${esc(c[k])}" oninput="clienteEdit.${k}=this.value"></div>`;
+  const dom = (d, i) => `<div class="domicilio">
+      <div class="form-grid">
+        <div class="campo"><label>Nombre del domicilio</label><input class="input" placeholder="Ej. Casa de mamá" value="${esc(d.alias)}" oninput="clienteEdit.domicilios[${i}].alias=this.value"></div>
+        <div class="campo" style="grid-column:span 2"><label>Dirección (colonia, calle y número)</label><input class="input" value="${esc(d.direccion)}" oninput="clienteEdit.domicilios[${i}].direccion=this.value"></div>
+        <div class="campo" style="grid-column:span 2"><label>Referencias</label><input class="input" value="${esc(d.referencia)}" oninput="clienteEdit.domicilios[${i}].referencia=this.value"></div>
+        <div class="campo"><label>GPS (lat, lng)</label><input class="input" placeholder="19.12, -104.34" value="${esc(gpsTexto(d.gps))}"
+          onchange="clienteEdit.domicilios[${i}].gps=parseGps(this.value); if(this.value && !clienteEdit.domicilios[${i}].gps) toast('Formato: 19.1273, -104.3460')">
+          <small>${d.gps ? `<a href="${linkMapa(d.gps)}" target="_blank">Ver mapa ↗</a> · ~${kmEstimado(d.gps) ?? '?'} km` : 'Pega las coordenadas de Google Maps'}</small></div>
+      </div>
+      <button class="btn btn-peligro btn-mini" onclick="clienteEdit.domicilios.splice(${i},1);pintarClientes()">🗑️ Quitar domicilio</button>
+    </div>`;
+  return `<div class="sub-title">${clienteAbierto === 'nuevo' ? '➕ Nuevo cliente' : '✏️ ' + esc(c.nombre)}</div>
+    <div class="form-grid">${campo('nombre', 'Nombre')}${campo('telefono', 'Teléfono (10 dígitos)')}${campo('grupo', 'Grupo')}${campo('notas', 'Notas', 'style="grid-column:1/-1"')}</div>
+    <div class="sub-title" style="margin-top:6px">🏠 Domicilios</div>
+    ${c.domicilios.map(dom).join('') || '<p class="sec-desc">Sin domicilios.</p>'}
+    <div class="barra" style="margin:10px 0 0">
+      <button class="btn btn-borde btn-mini" onclick="clienteEdit.domicilios.push({id:'',alias:'',direccion:'',referencia:'',gps:null});pintarClientes()">➕ Agregar domicilio</button>
+      <button class="btn btn-primario btn-mini" onclick="guardarCliente()">💾 Guardar</button>
+      <button class="btn btn-claro btn-mini" onclick="cerrarCliente()">Cancelar</button>
+      ${clienteAbierto !== 'nuevo' ? `<button class="btn btn-claro btn-mini" onclick="verPedidosCliente('${esc(clienteAbierto)}')">📋 Ver pedidos</button>
+      <button class="btn btn-peligro btn-mini" onclick="eliminarCliente()">🗑️ Eliminar cliente</button>` : ''}
+    </div>`;
+}
+
+async function guardarCliente() {
+  const original = clienteAbierto === 'nuevo' ? '' : clienteAbierto;
+  const r = await api('guardar_cliente', {metodo: 'POST', datos: {telefono_original: original, cliente: clienteEdit}});
+  if (!r.ok) { toast('⚠️ ' + r.error); return; }
+  clientes = clientes.filter(c => c.telefono !== original && c.telefono !== r.cliente.telefono);
+  clientes.unshift(r.cliente);
+  delete clientesCache[original]; clientesCache[r.cliente.telefono] = r.cliente;
+  envioEdit = {};
+  cerrarCliente();
+  toast('✅ Cliente guardado');
+}
+
+async function eliminarCliente() {
+  if (!confirm(`¿Eliminar a ${clienteEdit.nombre} y sus domicilios? Sus pedidos no se borran.`)) return;
+  const r = await api('eliminar_cliente', {metodo: 'POST', datos: {telefono: clienteAbierto}});
+  if (!r.ok) { toast('⚠️ ' + r.error); return; }
+  clientes = clientes.filter(c => c.telefono !== clienteAbierto);
+  delete clientesCache[clienteAbierto];
+  cerrarCliente();
+  toast('Cliente eliminado');
+}
+
+function verPedidosCliente(tel) {
+  filtrosPedidos = {por: 'registro', desde: sumarDias(hoyISO(), -365), hasta: hoyISO(), operador: '', estado: '', buscar: tel};
+  mostrarTab('pedidos');
 }
 
 // ── Respaldos ────────────────────────────────────────────────────────

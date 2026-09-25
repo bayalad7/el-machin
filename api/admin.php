@@ -116,7 +116,43 @@ function resumen_pedido(array $p): array {
         'entrega' => $p['entrega'], 'direccion' => $p['direccion'] ?? '', 'referencia' => $p['referencia'] ?? '',
         'gps' => $p['gps'] ?? null, 'articulos' => $p['articulos'], 'extras' => $p['extras'],
         'total_app' => $p['total_app'], 'total_calculado' => $p['total_calculado'], 'diferencia' => $p['diferencia'],
+        'envio' => $p['envio'] ?? null, 'total_final' => $p['total_final'] ?? null, 'forma_pago' => $p['forma_pago'] ?? '',
     ];
+}
+
+function numero($v, float $min = 0, float $max = 100000): float {
+    return is_numeric($v) ? max($min, min($max, (float) $v)) : 0.0;
+}
+
+function gps_valido($g): ?array {
+    return is_array($g) && is_numeric($g['lat'] ?? null) && is_numeric($g['lng'] ?? null)
+        && abs($g['lat']) <= 90 && abs($g['lng']) <= 180 ? ['lat' => (float) $g['lat'], 'lng' => (float) $g['lng']] : null;
+}
+
+// Limpia un cliente que llega del panel; conserva estadísticas del registro anterior
+function limpiar_cliente(array $c, string $tel, array $previo): array {
+    $doms = [];
+    foreach ((array) ($c['domicilios'] ?? []) as $d) {
+        if (!is_array($d) || trim((string) ($d['direccion'] ?? '')) === '') continue;
+        $doms[] = [
+            'id'         => preg_match('/^d[a-z0-9]+$/', (string) ($d['id'] ?? '')) ? $d['id'] : 'd' . base_convert((string) (int) (microtime(true) * 1000) + count($doms), 10, 36),
+            'alias'      => texto($d, 'alias', 60),
+            'direccion'  => texto($d, 'direccion', 300),
+            'referencia' => texto($d, 'referencia', 300),
+            'gps'        => gps_valido($d['gps'] ?? null),
+            'creado'     => $d['creado'] ?? date('c'),
+            'ultimo_uso' => $d['ultimo_uso'] ?? null,
+        ];
+    }
+    return array_merge($previo, [
+        'telefono' => $tel, 'nombre' => texto($c, 'nombre', 100), 'notas' => texto($c, 'notas', 500),
+        'grupo' => texto($c, 'grupo', 100), 'domicilios' => $doms,
+        'total_pedidos' => $previo['total_pedidos'] ?? 0, 'primer_pedido' => $previo['primer_pedido'] ?? date('c'),
+    ]);
+}
+
+function con_clientes_admin(callable $fn) {
+    try { return con_clientes($fn); } catch (RuntimeException $e) { error_api($e->getMessage(), 500); }
 }
 
 // ── Acciones ────────────────────────────────────────────────────────────
@@ -200,6 +236,90 @@ case 'POST estado_pedido':
     $p['historial'][] = ['estado' => $estado, 'fecha' => date('c')];
     escribir_json($ruta, $p);
     responder(['ok' => true]);
+
+// ── Clientes ──
+case 'GET clientes':
+    exigir_sesion();
+    $lista = array_values(leer_clientes());
+    usort($lista, fn($a, $b) => strcmp($b['ultimo_pedido'] ?? '', $a['ultimo_pedido'] ?? ''));
+    responder(['ok' => true, 'clientes' => $lista]);
+
+case 'GET cliente':
+    exigir_sesion();
+    $tel = normalizar_telefono((string) ($_GET['telefono'] ?? ''));
+    responder(['ok' => true, 'cliente' => leer_clientes()[$tel] ?? null]);
+
+case 'POST guardar_cliente':
+    exigir_sesion(); exigir_csrf();
+    $datos = leer_cuerpo_json(65536);
+    $c = is_array($datos['cliente'] ?? null) ? $datos['cliente'] : error_api('Cliente inválido');
+    $tel = normalizar_telefono((string) ($c['telefono'] ?? ''));
+    $original = normalizar_telefono((string) ($datos['telefono_original'] ?? ''));
+    if (strlen($tel) !== 10) error_api('El teléfono debe tener 10 dígitos');
+    if (texto($c, 'nombre') === '') error_api('Falta el nombre del cliente');
+    $guardado = con_clientes_admin(function (&$clientes) use ($c, $tel, $original) {
+        if ($tel !== $original && isset($clientes[$tel])) return null;
+        $previo = $clientes[$original] ?? [];
+        if ($original !== '' && $original !== $tel) unset($clientes[$original]);
+        return $clientes[$tel] = limpiar_cliente($c, $tel, $previo);
+    });
+    if (!$guardado) error_api('Ya existe otro cliente con ese teléfono', 409);
+    responder(['ok' => true, 'cliente' => $guardado]);
+
+case 'POST eliminar_cliente':
+    exigir_sesion(); exigir_csrf();
+    $tel = normalizar_telefono((string) (leer_cuerpo_json(4096)['telefono'] ?? ''));
+    con_clientes_admin(function (&$clientes) use ($tel) { unset($clientes[$tel]); });
+    responder(['ok' => true]);
+
+// ── Tarifario de envío ──
+case 'GET envio':
+    exigir_sesion();
+    responder(['ok' => true, 'config' => envio_config()]);
+
+case 'POST guardar_envio':
+    exigir_sesion(); exigir_csrf();
+    $c = leer_cuerpo_json(8192)['config'] ?? [];
+    $tarifa = fn($t) => ['base_km' => numero($t['base_km'] ?? 0, 0, 500), 'base_precio' => numero($t['base_precio'] ?? 0),
+                         'precio_km_extra' => numero($t['precio_km_extra'] ?? 0)];
+    $rest = gps_valido($c['restaurante'] ?? null);
+    if (!$rest) error_api('Coordenadas del restaurante inválidas');
+    $cfg = [
+        'restaurante'   => $rest + ['mapa' => texto($c['restaurante'], 'mapa', 300)],
+        'factor_calles' => numero($c['factor_calles'] ?? 1.3, 1, 3),
+        'lluvia_activa' => !empty($c['lluvia_activa']),
+        'normal'        => $tarifa($c['normal'] ?? []),
+        'lluvia'        => $tarifa($c['lluvia'] ?? []),
+    ];
+    escribir_json(ENVIO_FILE, $cfg);
+    responder(['ok' => true, 'config' => $cfg]);
+
+// Guarda el cálculo del envío de un pedido a domicilio y actualiza su total
+case 'POST envio_pedido':
+    exigir_sesion(); exigir_csrf();
+    $datos = leer_cuerpo_json(8192);
+    $ruta = ruta_pedido((string) ($datos['folio'] ?? ''));
+    $p = $ruta ? leer_json($ruta) : null;
+    if (!$p) error_api('Pedido no encontrado', 404);
+    $e = (array) ($datos['envio'] ?? []);
+    $envio = [
+        'domicilio_id'    => preg_match('/^d[a-z0-9]+$/', (string) ($e['domicilio_id'] ?? '')) ? $e['domicilio_id'] : null,
+        'para'            => texto($e, 'para', 300),
+        'km'              => round(numero($e['km'] ?? 0, 0, 500), 1),
+        'lluvia'          => !empty($e['lluvia']),
+        'forma_pago'      => in_array($e['forma_pago'] ?? '', ['efectivo', 'transferencia'], true) ? $e['forma_pago'] : 'efectivo',
+        'listo'           => preg_match('/^\d{2}:\d{2}$/', (string) ($e['listo'] ?? '')) ? $e['listo'] : '',
+        'tarifa'          => numero($e['tarifa'] ?? 0),
+        'repartidor_paga' => numero($e['repartidor_paga'] ?? 0),
+        'cliente_paga'    => numero($e['cliente_paga'] ?? 0),
+        'ganancia'        => numero($e['ganancia'] ?? 0),
+        'actualizado'     => date('c'),
+    ];
+    $p['envio'] = $envio;
+    $p['total_final'] = round((float) $p['total_calculado'] + $envio['tarifa'], 2);
+    if ($envio['domicilio_id']) $p['cliente']['domicilio_id'] = $envio['domicilio_id'];
+    escribir_json($ruta, $p);
+    responder(['ok' => true, 'envio' => $envio, 'total_final' => $p['total_final']]);
 
 case 'GET respaldos':
     exigir_sesion();

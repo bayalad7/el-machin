@@ -441,7 +441,8 @@
 
   <div class="sec-title">👤 Datos del cliente</div>
   <input class="input-field" id="nombreInput" placeholder="Nombre del cliente *" oninput="validateCheckout()" />
-  <input class="input-field" id="telefonoInput" placeholder="Teléfono del cliente *" oninput="validateCheckout()" />
+  <input class="input-field" id="telefonoInput" placeholder="Teléfono del cliente *" oninput="validateCheckout();renderDireccionesGuardadas()" />
+  <div id="recientesWrap"></div>
 
   <div class="sec-title">🏷️ ¿De dónde nos conociste?</div>
   <div id="grupoOpts" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
@@ -479,6 +480,7 @@
     </div>
 
     <div class="sec-title">📍 Dirección de entrega</div>
+    <div id="direccionesGuardadas"></div>
     <input class="input-field" id="direccionInput" placeholder="Calle, número, colonia *" oninput="validateCheckout()" />
     <input class="input-field" id="referenciaInput" placeholder="Referencias (entre calles, color de casa...)" />
 
@@ -495,6 +497,16 @@
         <span id="coordsText">—</span>
         <a id="mapsLink" href="#" target="_blank">Ver en Google Maps ↗</a>
       </div>
+    </div>
+  </div>
+
+  <div class="sec-title">💳 ¿Cómo vas a pagar?</div>
+  <div id="pagoCards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
+    <div class="opt-card" data-pago="efectivo" onclick="selectPago(this,'efectivo')">
+      <div class="opt-card-inner"><div class="icon">💵</div><div class="label">Efectivo</div><div class="sub">Pagas al recibir</div></div>
+    </div>
+    <div class="opt-card" data-pago="transferencia" onclick="selectPago(this,'transferencia')">
+      <div class="opt-card-inner"><div class="icon">🏦</div><div class="label">Transferencia</div><div class="sub">Te enviamos los datos</div></div>
     </div>
   </div>
 
@@ -648,6 +660,7 @@ let state = {prep:null, sabor:null, nivel:null, tostosSabor:null, mariscos:[], s
              micheladaCerveza:null, micheladaPreparado:null, micheladaTipo:null, micheladaCamaron:null};
 let cart = [];
 let entrega = null;
+let formaPago = null;   // efectivo | transferencia
 let gpsCoords = null;
 let selectedFecha = null;
 let selectedGrupo = null;
@@ -1134,6 +1147,8 @@ function cancelarCarrito() {
   cart = [];
   extrasQty = {};
   entrega = null;
+  formaPago = null;
+  document.querySelectorAll('#pagoCards .opt-card').forEach(c=>c.classList.remove('selected'));
   gpsCoords = null;
   selectedFecha = null;
   selectedGrupo = null;
@@ -1271,6 +1286,74 @@ function renderCart() {
   updateVerCarrito();
 }
 
+// ── CLIENTES RECIENTES (solo en este dispositivo) ─────────────────────
+// Se ofrecen como botones para no tener que volver a escribir nombre, teléfono y domicilios.
+// No se llenan solos: el teléfono puede ser compartido por el personal que toma pedidos.
+const RECIENTES_KEY = 'machin_clientes_recientes';
+
+function leerRecientes() {
+  try { return JSON.parse(localStorage.getItem(RECIENTES_KEY)) || []; } catch { return []; }
+}
+
+function recordarCliente(nombre, telefono, dir, ref) {
+  const tel = telefono.replace(/\D/g, '').slice(-10);
+  if (tel.length < 10) return;
+  let lista = leerRecientes();
+  const c = lista.find(x => x.telefono === tel) || {telefono: tel, domicilios: []};
+  c.nombre = nombre;
+  if (entrega === 'domicilio' && dir) {
+    c.domicilios = [{direccion: dir, referencia: ref, gps: gpsCoords},
+                    ...c.domicilios.filter(d => norm(d.direccion) !== norm(dir))].slice(0, 5);
+  }
+  lista = [c, ...lista.filter(x => x.telefono !== tel)].slice(0, 5);
+  try { localStorage.setItem(RECIENTES_KEY, JSON.stringify(lista)); } catch {}
+}
+
+function renderRecientes() {
+  const lista = leerRecientes();
+  document.getElementById('recientesWrap').innerHTML = lista.length
+    ? `<div style="font-size:.75rem;font-weight:800;color:#9a8070;margin:-2px 0 6px">🕘 Datos usados antes en este dispositivo:</div>
+       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${lista.map((c, i) =>
+         `<div class="grupo-chip" onclick="usarReciente(${i})">${esc(c.nombre)} · ···${esc(c.telefono.slice(-4))}</div>`).join('')}</div>`
+    : '';
+  renderDireccionesGuardadas();
+}
+
+function usarReciente(i) {
+  const c = leerRecientes()[i];
+  if (!c) return;
+  document.getElementById('nombreInput').value = c.nombre;
+  document.getElementById('telefonoInput').value = c.telefono;
+  renderDireccionesGuardadas();
+  validateCheckout();
+}
+
+function renderDireccionesGuardadas() {
+  const tel = document.getElementById('telefonoInput').value.replace(/\D/g, '').slice(-10);
+  const c = leerRecientes().find(x => x.telefono === tel);
+  document.getElementById('direccionesGuardadas').innerHTML = c?.domicilios?.length
+    ? `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">${c.domicilios.map((d, i) =>
+        `<div class="grupo-chip" style="white-space:normal" onclick="usarDireccion(${i})">🏠 ${esc(d.direccion)}</div>`).join('')}</div>`
+    : '';
+}
+
+function usarDireccion(i) {
+  const tel = document.getElementById('telefonoInput').value.replace(/\D/g, '').slice(-10);
+  const d = leerRecientes().find(x => x.telefono === tel)?.domicilios?.[i];
+  if (!d) return;
+  document.getElementById('direccionInput').value = d.direccion;
+  document.getElementById('referenciaInput').value = d.referencia || '';
+  if (d.gps) { gpsCoords = d.gps; showMap(d.gps.lat, d.gps.lng); }
+  validateCheckout();
+}
+
+function selectPago(el, val) {
+  document.querySelectorAll('#pagoCards .opt-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  formaPago = val;
+  validateCheckout();
+}
+
 function selectEntrega(el, val) {
   document.querySelectorAll('.entrega-cards .opt-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
@@ -1289,7 +1372,7 @@ function validateCheckout() {
   const btn      = document.getElementById('btnWhatsapp');
   if (!btn) return;
   const domicilioOk = entrega !== 'domicilio' || !!dir;
-  const ok = nombre && telefono && hora && entrega && domicilioOk && !!selectedFecha && !!selectedOperador;
+  const ok = nombre && telefono && hora && entrega && formaPago && domicilioOk && !!selectedFecha && !!selectedOperador;
   btn.disabled = !ok;
   btn.style.opacity = ok ? '1' : '.5';
   btn.style.cursor  = ok ? 'pointer' : 'not-allowed';
@@ -1469,7 +1552,7 @@ function goTo(n) {
   const screens = [null,'screenBuild','screenCart','screenCheckout'];
   document.getElementById(screens[n]).classList.add('active');
   if (n===2) renderCart();
-  if (n===3) { renderSummary(); renderFechas(); renderHoras(); renderGrupos(); document.getElementById('totalBar').style.display='none'; }
+  if (n===3) { renderSummary(); renderFechas(); renderHoras(); renderGrupos(); renderRecientes(); document.getElementById('totalBar').style.display='none'; }
   if (n===1) document.getElementById('totalBar').style.display = cart.length ? 'flex' : 'none';
   window.scrollTo(0,0);
 }
@@ -1526,6 +1609,7 @@ function armarPayload(extra) {
     fecha: selectedFecha?.iso || '',
     fechaTexto: selectedFecha?.label || '',
     entrega,
+    formaPago,
     gps: entrega === 'domicilio' ? gpsCoords : null,
     total: getGrandTotal(),
     items: cart.map(i => ({
@@ -1553,8 +1637,10 @@ async function sendWhatsApp() {
   if (!selectedFecha) { alert('Por favor selecciona la fecha del pedido'); return; }
   if (!horaVal)       { alert('Por favor indica la hora estimada'); return; }
   if (!entrega)       { alert('Por favor selecciona cómo recibirás tu pedido'); return; }
+  if (!formaPago)     { alert('Por favor elige cómo vas a pagar'); return; }
   if (entrega === 'domicilio' && !dir) { alert('Por favor ingresa tu dirección'); return; }
 
+  recordarCliente(nombre, telefono, dir, ref);
   const horaTipo = entrega === 'domicilio' ? 'entrega' : 'recolección';
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -1579,6 +1665,7 @@ async function sendWhatsApp() {
   if (selectedGrupo) msg += `🏷️ *Grupo:* ${selectedGrupo}\n`;
   msg += `📅 *Fecha:* ${selectedFecha.label}\n`;
   msg += `⏰ *Hora de ${horaTipo}:* ${horaStr}\n`;
+  msg += `💳 *Pago:* ${formaPago === 'transferencia' ? '🏦 Transferencia' : '💵 Efectivo'}\n`;
   msg += `\n📋 *PEDIDO:*\n`;
 
   cart.forEach((item,i) => {

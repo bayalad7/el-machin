@@ -28,8 +28,15 @@ Then open `http://localhost:8000/` (app) and `http://localhost:8000/admin/` (pan
 | `api/comun.php` | Shared helpers: atomic JSON writes, `menu_vigente()`, server-side pricing (`precio_unitario`, mirrors JS `buscarPrecio`), folio counter with `flock`, per-IP rate limit. |
 | `api/menu.php` | `GET` current menu. |
 | `api/pedido.php` | `POST` order → recomputes total, assigns folio `MACH-AAAAMMDD-###`, writes `datos/pedidos/AAAA-MM/FOLIO.json`. |
-| `api/admin.php` | Admin API (PHP session + `X-CSRF` header): login, menu save with validation + auto-backup, orders list/status, backups/restore. |
-| `datos/` | Runtime data (live `menu.json`, `respaldos/`, `pedidos/`, `limites/`). Git-ignored except `.htaccess` (denies web access on Apache). |
+| `api/admin.php` | Admin API (PHP session + `X-CSRF` header): login, menu save with validation + auto-backup, orders list/status, backups/restore, client catalog, delivery tariff, per-order delivery (`envio_pedido` sets `envio` + `total_final`). |
+| `datos/` | Runtime data (live `menu.json`, `respaldos/`, `pedidos/`, `clientes.json`, `envio.json`, `limites/`). Git-ignored except `.htaccess` (denies web access on Apache). |
+
+### Clients and delivery
+
+- `api/pedido.php` upserts the client in `datos/clientes.json` (key = last 10 phone digits) via `registrar_cliente_de_pedido()`; a new address becomes another `domicilios[]` entry unless the normalized text matches or GPS is < 60 m from a saved one. Client registration failures never block saving the order (`con_clientes()` throws instead of calling `error_api()`).
+- Delivery tariff (`envio_config()`): base price up to `base_km` + `precio_km_extra` per started extra km, separate `normal`/`lluvia` tables. JS `tarifaEnvio()` in `admin/index.html` mirrors PHP `calcular_tarifa()`. Km estimate = haversine from `restaurante` × `factor_calles`.
+- Courier message follows the provider's template (`mensajeRepartidor()`); cash: courier pays food and collects food + delivery; transfer: client pays us food + delivery, we pay the courier, so courier pays 0 and collects 0. Customer picks `formaPago` in the app (stored as `forma_pago`).
+- The customer app only remembers recent clients/addresses in `localStorage` (`machin_clientes_recientes`); the server catalog is never exposed publicly.
 
 External dependencies are CDN-only: Leaflet 1.9.4 + OpenStreetMap tiles (delivery map), Google Fonts (Fredoka One, Nunito).
 

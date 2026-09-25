@@ -60,6 +60,7 @@ $pedido = [
     'fecha_texto'     => texto($p, 'fechaTexto', 60),
     'hora'            => texto($p, 'hora', 10),
     'entrega'         => texto($p, 'entrega', 20),
+    'forma_pago'      => in_array($p['formaPago'] ?? '', ['efectivo', 'transferencia'], true) ? $p['formaPago'] : '',
     'direccion'       => texto($p, 'direccion', 300),
     'referencia'      => texto($p, 'referencia', 300),
     'gps'             => is_array($gps) && is_numeric($gps['lat'] ?? null) && is_numeric($gps['lng'] ?? null)
@@ -71,6 +72,13 @@ $pedido = [
     'diferencia'      => round($totalApp - $total, 2) != 0.0,
     'id_cliente'      => texto($p, 'idLocal', 40),
 ];
+
+// Alta/actualización del cliente y su domicilio en el catálogo (si falla, el pedido se guarda igual)
+$registro = registrar_cliente_de_pedido($pedido);
+if ($registro) {
+    $pedido['cliente']['telefono_normalizado'] = $registro['telefono'];
+    $pedido['cliente']['domicilio_id'] = $registro['domicilio_id'];
+}
 
 escribir_json(ruta_pedido($folio), $pedido);
 responder(['ok' => true, 'folio' => $folio, 'total_calculado' => $pedido['total_calculado']]);

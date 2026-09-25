@@ -119,6 +119,34 @@ Pon `activo` = **no** (productos, mariscos, extras, operadores, opciones de mich
 - Cada pedido también es un archivo en `datos/pedidos/AAAA-MM/FOLIO.json` en el servidor. El folio (ej. `MACH-20261001-003`) aparece en el mensaje de WhatsApp.
 - Si el cliente no tenía conexión con el servidor al enviar, el WhatsApp sale sin folio y el pedido se registra automáticamente la próxima vez que abra la app.
 
+### Envíos a domicilio
+**Configurar el tarifario (una vez, y cuando el proveedor cambie precios):** pestaña **🛵 Envíos**.
+- *Tarifa normal* y *Tarifa con lluvia*: km incluidos en la base, precio base y costo por km extra. Cada km adicional se cobra completo aunque sea fracción (5.2 km = 1 km extra). La tabla de abajo muestra cuánto sale a 3, 5, 6, 8, 10 y 12 km para revisar que esté bien.
+- *Ubicación del restaurante*: el enlace de Google Maps (es la primera línea del mensaje al repartidor) y las coordenadas, que se usan para estimar los km.
+- *Factor de calles*: la distancia en línea recta se multiplica por este número (1.3 por defecto) para aproximar el recorrido real.
+
+**Cuando llueve:** en **📋 Pedidos** toca **🌤️ Lloviendo: no** para cambiarlo a **☔ Lloviendo: sí**. Los envíos que calcules a partir de ese momento proponen la tarifa de lluvia. Vuelve a tocarlo cuando pare.
+
+**Calcular el envío de un pedido:**
+1. En **📋 Pedidos** abre un pedido a domicilio (dice *🛵 envío pendiente*).
+2. En la sección **🛵 Envío** revisa:
+   - *Domicilio del cliente*: si el cliente tiene varios domicilios, elige el correcto.
+   - *PARA*: colonia, calle y número tal como lo verá el repartidor.
+   - *Distancia*: si el domicilio tiene GPS se propone un estimado; corrígelo si sabes la distancia real. Sin GPS, escríbela.
+   - *☔ Lluvia*, *Pago del cliente* y *⏰ Pedido listo*. La forma de pago viene de la que eligió el cliente en la app (💵 Efectivo o 🏦 Transferencia); puedes cambiarla.
+3. Los montos se calculan solos y se pueden corregir a mano:
+   - **Efectivo:** el repartidor paga la comida al recogerla (*Repartidor paga*) y le cobra al cliente comida + envío (*Cliente paga*).
+   - **Transferencia:** el cliente les transfiere a ustedes comida + envío, y ustedes le pagan el envío al repartidor. En el mensaje sale *Repartidor paga $0* y *Cliente paga $0* (no cobra nada al entregar).
+   - *Ganancia envío* = costo del envío.
+4. **💾 Guardar envío y total** actualiza el total del pedido (comida + envío).
+5. **📋 Copiar mensaje** o **🛵 Enviar al repartidor** (abre WhatsApp para elegir el contacto) con la plantilla del proveedor. **💬 Avisar total al cliente** abre WhatsApp con el cliente y el desglose.
+
+### Clientes
+- Se registran solos con cada pedido, identificados por su teléfono (no importa si lo escriben con espacios o con +52). Cada dirección nueva se agrega como otro domicilio del mismo cliente; si escribe la misma dirección de otra forma o su GPS está a menos de 60 m de uno guardado, se reconoce como el mismo.
+- En **👥 Clientes** puedes buscar, corregir nombre o teléfono, ponerle nombre a cada domicilio (*Casa de mamá*), agregar o quitar domicilios y pegar las coordenadas de Google Maps para que el envío se estime solo.
+- **📋 Ver pedidos** muestra los pedidos de ese cliente del último año. Eliminar un cliente no borra sus pedidos.
+- En la app, el celular donde se hizo un pedido recuerda los datos: en la pantalla de envío aparecen botones con los clientes recientes y sus domicilios para no volver a escribirlos. Esos datos se quedan solo en ese celular.
+
 ---
 
 ## 3. Referencia técnica
@@ -133,6 +161,6 @@ Pon `activo` = **no** (productos, mariscos, extras, operadores, opciones de mich
 | `api/admin.php` | API del panel (sesión + token CSRF): login, menú, pedidos, estados, respaldos. |
 | `api/crear-password.php` | Crea/cambia la contraseña (solo por consola). |
 | `api/config.local.php` | Hash de la contraseña y ajustes locales. **No se sube a git.** |
-| `datos/` | Menú editado, respaldos (`respaldos/`) y pedidos (`pedidos/AAAA-MM/`). **No se sube a git.** |
+| `datos/` | Menú editado (`menu.json`), respaldos (`respaldos/`), pedidos (`pedidos/AAAA-MM/`), catálogo de clientes (`clientes.json`) y tarifario de envío (`envio.json`). **No se sube a git.** |
 
 Para probar en local (requiere PHP): `php -S localhost:8000` en la carpeta de la app y abrir `http://localhost:8000/`. La app ya no funciona abriendo `index.html` con doble clic, porque el navegador no permite leer el menú desde un archivo local.
