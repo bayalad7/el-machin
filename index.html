@@ -49,13 +49,14 @@
     gap: 10px;
     margin-bottom: 18px;
   }
-  .card-grid .opt-card:nth-child(1) { grid-column: span 2; }
-  .card-grid .opt-card:nth-child(2) { grid-column: span 2; }
-  .card-grid .opt-card:nth-child(3) { grid-column: span 2; }
-  .card-grid .opt-card:nth-child(4) { grid-column: span 2; }
-  .card-grid .opt-card:nth-child(5) { grid-column: span 2; }
-  .card-grid .opt-card:nth-child(6) { grid-column: span 2; }
-  .card-grid .opt-card:nth-child(7) { grid-column: span 6; }
+  /* Ancho de cada tarjeta según la columna "ancho" del menú */
+  .card-grid .opt-card.ancho-tercio   { grid-column: span 2; }
+  .card-grid .opt-card.ancho-medio    { grid-column: span 3; }
+  .card-grid .opt-card.ancho-completo { grid-column: span 6; }
+  .card-grid .opt-card.ancho-completo .opt-card-inner { display:flex; align-items:center; justify-content:center; gap:14px; padding:14px 18px; }
+  .card-grid .opt-card.ancho-completo .icon { margin-bottom:0; font-size:2.2rem; }
+  .card-grid .opt-card.ancho-completo .card-text { text-align:left; }
+  .menu-estado { grid-column: span 6; text-align:center; padding:28px 12px; color:#9a8070; font-weight:700; }
   .opt-card {
     position: relative;
     overflow: hidden;
@@ -110,14 +111,7 @@
     margin-top: 3px;
     line-height: 1.3;
   }
-  /* per-card accent colours */
-  .opt-card[data-prep="Ceviche"]           { --card-accent: #2ebd6b; }
-  .opt-card[data-prep="Aguachile Mariposa"]{ --card-accent: #ff6b2b; }
-  .opt-card[data-prep="Aguachile Botana"]  { --card-accent: #e8334a; }
-  .opt-card[data-prep="Tahitiana"]         { --card-accent: #f5c518; }
-  .opt-card[data-prep="Tostiaguachile"]    { --card-accent: #9b59b6; }
-  .opt-card[data-prep="Tacos Empanizados"] { --card-accent: #1e8bc3; }
-  .opt-card[data-prep="Micheladas"]          { --card-accent: #f39c12; }
+  /* El color de cada tarjeta (--card-accent) viene de la columna "color" del menú */
 
   .marisco-row { display:flex; align-items:center; justify-content:space-between; background:#fff; border:2.5px solid var(--gris); border-radius:14px; padding:12px 14px; margin-bottom:10px; cursor:pointer; transition:all .18s; box-shadow:var(--sombra); }
   .marisco-row.selected { border-color:var(--verde); background:#f0fdf4; }
@@ -350,58 +344,8 @@
 <div class="screen active" id="screenBuild">
 
   <div class="sec-title" style="margin-top:12px">🍽️ ¿Qué preparado?</div>
-  <div class="card-grid">
-    <div class="opt-card" data-prep="Ceviche" onclick="selectPrep(this,'Ceviche')">
-      <div class="opt-card-inner">
-        <span class="icon">🐟🍋</span>
-        <div class="label">Ceviches</div>
-        <div class="sub">Cebolla, jitomate, cilantro</div>
-      </div>
-    </div>
-    <div class="opt-card" data-prep="Aguachile Mariposa" onclick="selectPrep(this,'Aguachile Mariposa')">
-      <div class="opt-card-inner">
-        <span class="icon">🦋🦐</span>
-        <div class="label">Aguachiles</div>
-        <div class="sub">Estilo tradicional mariposa</div>
-      </div>
-    </div>
-    <div class="opt-card card-row2" data-prep="Aguachile Botana" onclick="selectPrep(this,'Aguachile Botana')">
-      <div class="opt-card-inner">
-        <span class="icon">🔪🦐</span>
-        <div class="label">Aguachiles en Botana</div>
-        <div class="sub">Picado en cuadritos</div>
-      </div>
-    </div>
-    <div class="opt-card card-row2" data-prep="Tahitiana" onclick="selectPrep(this,'Tahitiana')">
-      <div class="opt-card-inner">
-        <span class="icon">🥥🐟</span>
-        <div class="label">Tahitianas</div>
-        <div class="sub">Con salsas y clamato</div>
-      </div>
-    </div>
-    <div class="opt-card card-row2" data-prep="Tostiaguachile" onclick="selectPrep(this,'Tostiaguachile')">
-      <div class="opt-card-inner">
-        <span class="icon">🍟🌶️</span>
-        <div class="label">Tostiaguachiles</div>
-        <div class="sub">Con tostitos al gusto</div>
-      </div>
-    </div>
-    <div class="opt-card card-row2" data-prep="Tacos Empanizados" onclick="selectPrep(this,'Tacos Empanizados')">
-      <div class="opt-card-inner">
-        <span class="icon">🌮🍤</span>
-        <div class="label">Tacos Empanizados</div>
-        <div class="sub">Camarón o pescado crocante</div>
-      </div>
-    </div>
-    <div class="opt-card" data-prep="Micheladas" onclick="selectPrep(this,'Micheladas')">
-      <div class="opt-card-inner" style="display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 18px;">
-        <span class="icon" style="margin-bottom:0;font-size:2.2rem">🍺</span>
-        <div style="text-align:left">
-          <div class="label">Micheladas</div>
-          <div class="sub">Vasos preparados de cerveza · Victoria, Corona, Pacífico</div>
-        </div>
-      </div>
-    </div>
+  <div class="card-grid" id="prepOpts">
+    <div class="menu-estado">⏳ Cargando menú...</div>
   </div>
 
   <!-- PICOR: siempre visible tras elegir preparado -->
@@ -414,42 +358,20 @@
     <!-- Para tostiaguachiles: elegir sabor de tostitos -->
     <div id="tostosWrap" style="display:none">
       <div class="sec-title">🍟 Sabor de tostitos</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;" id="tostosOpts">
-        <div class="opt-card" onclick="selectTostos(this,'verde')">
-          <div class="opt-card-inner"><div class="icon">💚</div><div class="label">Verde</div><div class="sub">Tostitos sabor verde</div></div>
-        </div>
-        <div class="opt-card" onclick="selectTostos(this,'morado')">
-          <div class="opt-card-inner"><div class="icon">💜</div><div class="label">Morado</div><div class="sub">Tostitos sabor morado</div></div>
-        </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;" id="tostosOpts"></div>
+    </div>
+    <!-- Nivel de picor (según columna "picor" del producto) -->
+    <div id="nivelWrap">
+      <div class="sec-title">
+        🌶️ Nivel de picante
+        <span id="picorOpcionalBadge" class="picor-opcional" style="display:none">Opcional</span>
       </div>
+      <div class="nivel-grid" id="nivelOpts"></div>
     </div>
-    <!-- Nivel de picor para todos -->
-    <div class="sec-title">
-      🌶️ Nivel de picante
-      <span id="picorOpcionalBadge" class="picor-opcional" style="display:none">Opcional</span>
-    </div>
-    <div class="nivel-grid" id="nivelOpts"></div>
   </div>
 
   <div class="sec-title" id="mariscoTitle">🦐 ¿Qué marisco? <small style="font-size:.72rem; font-weight:700; color:#9a8070; background:var(--gris); border-radius:8px; padding:3px 10px; margin-left:4px;">Puedes combinar</small></div>
-  <div id="mariscosOpts">
-    <div class="marisco-row" onclick="toggleMarisco(this,'Pescado')">
-      <div class="m-left"><span class="m-icon">🐟</span><div><div class="m-name">Pescado</div></div></div>
-      <div class="check-box">✓</div>
-    </div>
-    <div class="marisco-row" onclick="toggleMarisco(this,'Camarón cocido en limón')">
-      <div class="m-left"><span class="m-icon">🦐</span><div><div class="m-name">Camarón cocido en limón 🍋</div></div></div>
-      <div class="check-box">✓</div>
-    </div>
-    <div class="marisco-row" onclick="toggleMarisco(this,'Camarón cocido en agua')">
-      <div class="m-left"><span class="m-icon">🦐</span><div><div class="m-name">Camarón cocido en agua 💧</div><!--<div class="m-sub">Cocido en agua</div>--></div></div>
-      <div class="check-box">✓</div>
-    </div>
-    <div class="marisco-row" onclick="toggleMarisco(this,'Pulpo')">
-      <div class="m-left"><span class="m-icon">🐙</span><div><div class="m-name">Pulpo</div></div></div>
-      <div class="check-box">✓</div>
-    </div>
-  </div>
+  <div id="mariscosOpts"></div>
 
   <!-- SECCIÓN MICHELADAS -->
   <div id="micheladaSection" style="display:none">
@@ -512,20 +434,7 @@
 <div class="screen" id="screenCheckout">
 
   <div class="sec-title">💼¿Quién toma el pedido?</div>
-  <div id="operadorGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
-    <div class="opt-card" onclick="selectOperador(this,'Benjamín')">
-      <div class="opt-card-inner"><div class="icon">🧑</div><div class="label">Benjamín</div></div>
-    </div>
-    <div class="opt-card" onclick="selectOperador(this,'Cinthia')">
-      <div class="opt-card-inner"><div class="icon">👩</div><div class="label">Cinthia</div></div>
-    </div>
-    <div class="opt-card" onclick="selectOperador(this,'Citlali')">
-      <div class="opt-card-inner"><div class="icon">👩</div><div class="label">Citlali</div></div>
-    </div>
-    <div class="opt-card" onclick="selectOperador(this,'Víctor')">
-      <div class="opt-card-inner"><div class="icon">👦</div><div class="label">Víctor</div></div>
-    </div>
-  </div>
+  <div id="operadorGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;"></div>
 
   <div class="sec-title">👤 Datos del cliente</div>
   <input class="input-field" id="nombreInput" placeholder="Nombre del cliente *" oninput="validateCheckout()" />
@@ -606,124 +515,131 @@
 </div>
 
 <script>
-const PRECIOS = {
-  'Ceviche': {
-    'Pescado':                 {kg:600, lt:210, medio:130},
-    'Camarón cocido en limón': {kg:690, lt:240, medio:170},
-    'Camarón cocido en agua':  {kg:750, lt:260, medio:180},
-    'Pulpo':                   {kg:840, lt:290, medio:190},
-    'Mixto':                   {kg:840, lt:290, medio:190},
-  },
-  'Aguachile Mariposa': {
-    'Rojo - Pescado':                    {kg:690, lt:240, medio:170},
-    'Rojo - Camarón cocido en limón':    {kg:750, lt:260, medio:180},
-    'Rojo - Camarón cocido en agua':     {kg:810, lt:280, medio:190},
-    'Rojo - Mixto':                      {kg:870, lt:300, medio:200},
-    'Verde - Pescado':                   {kg:660, lt:230, medio:160},
-    'Verde - Camarón cocido en limón':   {kg:720, lt:250, medio:170},
-    'Verde - Camarón cocido en agua':    {kg:780, lt:270, medio:180},
-    'Verde - Mixto':                     {kg:840, lt:290, medio:190},
-    'Negro - Pescado':                   {kg:660, lt:230, medio:160},
-    'Negro - Camarón cocido en limón':   {kg:720, lt:250, medio:170},
-    'Negro - Camarón cocido en agua':    {kg:780, lt:270, medio:180},
-    'Negro - Mixto':                     {kg:840, lt:290, medio:190},
-  },
-  'Aguachile Botana': {
-    'Rojo - Pescado':                    {kg:690, lt:240, medio:170},
-    'Rojo - Camarón cocido en limón':    {kg:750, lt:260, medio:180},
-    'Rojo - Camarón cocido en agua':     {kg:810, lt:280, medio:190},
-    'Rojo - Mixto':                      {kg:870, lt:300, medio:200},
-    'Rojo - Pulpo':                      {kg:870, lt:300, medio:200},
-    'Verde - Pescado':                   {kg:660, lt:230, medio:160},
-    'Verde - Camarón cocido en limón':   {kg:720, lt:250, medio:170},
-    'Verde - Camarón cocido en agua':    {kg:780, lt:270, medio:180},
-    'Verde - Mixto':                     {kg:840, lt:290, medio:190},
-    'Verde - Pulpo':                     {kg:840, lt:290, medio:190},
-    'Negro - Pescado':                   {kg:660, lt:230, medio:160},
-    'Negro - Camarón cocido en limón':   {kg:720, lt:250, medio:170},
-    'Negro - Camarón cocido en agua':    {kg:780, lt:270, medio:180},
-    'Negro - Mixto':                     {kg:840, lt:290, medio:190},
-    'Negro - Pulpo':                     {kg:840, lt:290, medio:190},
-  },
-  'Tahitiana': {
-    'Pescado':                 {kg:630, lt:220, medio:160},
-    'Camarón cocido en limón': {kg:690, lt:240, medio:170},
-    'Camarón cocido en agua':  {kg:750, lt:260, medio:180},
-    'Pulpo':                   {kg:840, lt:290, medio:190},
-    'Mixto':                   {kg:840, lt:290, medio:190},
-  },
-  'Tostiaguachile': {
-    'Pescado':                 {pieza:120},
-    'Camarón cocido en limón': {pieza:120},
-    'Camarón cocido en agua':  {pieza:120},
-    'Pulpo':                   {pieza:150},
-    'Mixto':                   {pieza:150},
-  },
-  'Tacos Empanizados': {
-    'Pescado empanizado':  {pieza:35},
-    'Camarón empanizado':  {pieza:35},
-    'Mixto':               {pieza:35},
-  },
-};
+// ── MENÚ ──────────────────────────────────────────────────────────────
+// Todo el menú sale de api/menu.php (menú que edita el admin). Si no responde,
+// se usa menu-default.json y, como último recurso, el último menú guardado.
+const MENU_FUENTES = ['api/menu.php', 'menu-default.json'];
+const MENU_CACHE_KEY = 'machin_menu';
 
-const SABORES = {
-  rojo:  {emoji:'🔴', nombre:'Rojo',  desc:'Chiles de árbol, clamato, mango'},
-  verde: {emoji:'🟢', nombre:'Verde', desc:'Chile serrano, cilantro, salsas verdes'},
-  negro: {emoji:'⚫', nombre:'Negro', desc:'Habanero + serrano, salsas negras'},
-};
-
-const NIVELES = [
-  {key:'sin',  icon:'🚫', label:'Sin picante'},
-  {key:'1',    icon:'🌶️', label:'Nivel 1'},
-  {key:'2',    icon:'🌶️🌶️', label:'Nivel 2'},
-  {key:'3',    icon:'🌶️🌶️🌶️', label:'Nivel 3'},
-];
-
-const SIZES = [
-  {key:'kg',    label:'KILO',  icon:'🪣'},
-  {key:'lt',    label:'LITRO',  icon:'🫙'},
-  {key:'medio', label:'½ LITRO',  icon:'🫙'},
-];
-
-const TOSTOS_SABORES = {
-  verde:  {emoji:'💚', nombre:'Verde'},
-  morado: {emoji:'💜', nombre:'Morado'},
-};
-
-const MICHELADAS_CERVEZAS = [
-  {key:'Victoria', icon:'🍺'},
-  {key:'Corona',   icon:'🍺'},
-  {key:'Pacífico', icon:'🍺'},
-];
-const MICHELADAS_PREPARADOS = [
-  {key:'Chelada',       desc:'Sal y Limón'},
-  {key:'Cielo Rojo',    desc:'Sal, Limón y Clamato'},
-  {key:'Salsas Negras', desc:'Sal, Limón, Clamato y Salsas Negras'},
-];
-const MICHELADAS_TIPOS = [
-  {key:'Sencilla',            precio:75,  camaron:false, icon:'🍺'},
-  {key:'Con Camarón',         precio:150, camaron:true,  icon:'🦐'},
-  {key:'Con Camarón y Pulpo', precio:180, camaron:true,  icon:'🦐🐙'},
-];
-const MICHELADAS_CAMARON = [
-  {key:'Camarón cocido en limón', icon:'🍋'},
-  {key:'Camarón cocido en agua',  icon:'💧'},
-];
-
-const EXTRAS_LISTA = [
-  {key:'Paquete de tostadas', icon:'🥙', precio:15},
-  {key:'Tostitos',            icon:'🍟', precio:25},
-  {key:'Salsa picosa',        icon:'🌶️', precio:10},
-  {key:'Plato desechable',    icon:'🍽️', precio:2.5},
-];
-const REFRESCOS_LISTA = [
-  {key:'Coca Cola',  icon:'🥤', precio:35},
-  {key:'Fanta',      icon:'🥤', precio:35},
-  {key:'Sprite',     icon:'🥤', precio:35},
-  {key:'Sidral Aga', icon:'🥤', precio:35},
-];
-const ALL_EXTRAS = [...EXTRAS_LISTA, ...REFRESCOS_LISTA];
+let MENU = null;
+let PRODUCTOS = [];                       // productos activos ordenados
+let SABORES = {}, TOSTOS_SABORES = {};    // clave -> {emoji, nombre, desc}
+let NIVELES = [], SIZES = [];
+let MICHELADAS_CERVEZAS = [], MICHELADAS_PREPARADOS = [], MICHELADAS_TIPOS = [], MICHELADAS_CAMARON = [];
+let ALL_EXTRAS = [];                      // agrupados por sección, en orden
+let OPERADORES = {}, OPERADORES_LISTA = [];
+let GRUPOS = [];
+let CONFIG = {};
 let extrasQty = {};
+
+const esSi = v => String(v ?? '').trim().toLowerCase() === 'si' || v === true;
+const activo = f => f.activo === undefined || f.activo === '' || esSi(f.activo);
+const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function cargarMenu() {
+  for (const url of MENU_FUENTES) {
+    try {
+      const r = await fetch(url, {cache:'no-store'});
+      if (!r.ok) continue;
+      const m = await r.json();
+      if (m && Array.isArray(m.productos)) {
+        try { localStorage.setItem(MENU_CACHE_KEY, JSON.stringify(m)); } catch {}
+        return m;
+      }
+    } catch {}
+  }
+  try { return JSON.parse(localStorage.getItem(MENU_CACHE_KEY)); } catch { return null; }
+}
+
+function aplicarMenu(m) {
+  MENU = m;
+  PRODUCTOS = m.productos.filter(activo).sort((a,b) => (Number(a.orden)||0) - (Number(b.orden)||0));
+
+  const sabores = grupo => Object.fromEntries((m.sabores||[]).filter(s => s.grupo === grupo)
+    .map(s => [s.clave, {emoji:s.emoji, nombre:s.nombre, desc:s.descripcion||''}]));
+  SABORES = sabores('aguachile');
+  TOSTOS_SABORES = sabores('tostitos');
+
+  NIVELES = (m.niveles||[]).map(n => ({key:String(n.clave), icon:n.icono, label:n.etiqueta}));
+  SIZES   = (m.tamanos||[]).map(t => ({key:t.clave, label:t.etiqueta, plural:t.plural||t.etiqueta, icon:t.icono}));
+
+  const mich = op => (m.micheladas||[]).filter(x => x.opcion === op && activo(x));
+  MICHELADAS_CERVEZAS   = mich('cerveza').map(x => ({key:x.clave, icon:x.icono||'🍺'}));
+  MICHELADAS_PREPARADOS = mich('preparado').map(x => ({key:x.clave, icon:x.icono||'🥂', desc:x.descripcion||''}));
+  MICHELADAS_TIPOS      = mich('tipo').map(x => ({key:x.clave, icon:x.icono||'🍺', precio:Number(x.precio)||0, camaron:esSi(x.requiere_camaron)}));
+  MICHELADAS_CAMARON    = mich('camaron').map(x => ({key:x.clave, icon:x.icono||'🦐'}));
+
+  const extras = (m.extras||[]).filter(activo);
+  const secciones = [...new Set(extras.map(e => e.seccion || ''))];
+  ALL_EXTRAS = secciones.flatMap(sec => extras.filter(e => (e.seccion||'') === sec)
+    .map(e => ({key:e.nombre, icon:e.icono, precio:Number(e.precio)||0, seccion:sec})));
+
+  OPERADORES_LISTA = (m.operadores||[]).filter(activo);
+  OPERADORES = Object.fromEntries(OPERADORES_LISTA.map(o => [o.nombre, String(o.whatsapp)]));
+  GRUPOS = (m.grupos||[]).map(g => ({key:g.clave, label:g.etiqueta}));
+  CONFIG = Object.fromEntries((m.config||[]).map(c => [c.clave, String(c.valor ?? '')]));
+
+  renderProductos();
+  renderSizes();
+  renderTostos();
+  renderOperadores();
+}
+
+function getProducto(nombre) {
+  return PRODUCTOS.find(p => p.nombre === nombre);
+}
+
+// Banderas de comportamiento del producto (sustituyen los chequeos por nombre)
+function flags(prod) {
+  const flujo = prod?.flujo || 'marisco';
+  return {
+    michelada: flujo === 'michelada',
+    simple:    flujo === 'simple',
+    marisco:   flujo === 'marisco',
+    conSabor:  !!prod?.sabores,
+    tostitos:  esSi(prod?.tostitos),
+    picor:     prod?.picor || 'no',          // obligatorio | opcional | no
+    porPieza:  flujo !== 'marisco' || prod?.cobro === 'pieza',
+  };
+}
+
+// Busca el precio en la tabla: producto + sabor (o vacío) + marisco (Mixto si son 2+)
+function buscarPrecio(prod, mariscos, columna, saborNombre) {
+  const marisco = mariscos.length > 1 ? 'Mixto' : (mariscos[0] || '');
+  const filas = (MENU.precios||[]).filter(p => p.producto === prod.nombre && norm(p.marisco) === norm(marisco));
+  const fila = filas.find(p => p.sabor && norm(p.sabor) === norm(saborNombre)) || filas.find(p => !p.sabor);
+  return Number(fila?.[columna]) || 0;
+}
+
+function renderProductos() {
+  const cont = document.getElementById('prepOpts');
+  if (!PRODUCTOS.length) { cont.innerHTML = '<div class="menu-estado">No hay productos disponibles por ahora.</div>'; return; }
+  cont.innerHTML = PRODUCTOS.map(p =>
+    `<div class="opt-card ancho-${esc(p.ancho||'tercio')}" data-prep="${esc(p.nombre)}" style="--card-accent:${esc(p.color||'#ff6b2b')}" onclick="selectPrep(this,this.dataset.prep)">
+      <div class="opt-card-inner">
+        <span class="icon">${esc(p.icono)}</span>
+        <div class="card-text">
+          <div class="label">${esc(p.titulo||p.nombre)}</div>
+          ${p.subtitulo ? `<div class="sub">${esc(p.subtitulo)}</div>` : ''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderTostos() {
+  document.getElementById('tostosOpts').innerHTML = Object.entries(TOSTOS_SABORES).map(([k,s]) =>
+    `<div class="opt-card" data-val="${esc(k)}" onclick="selectTostos(this,this.dataset.val)">
+      <div class="opt-card-inner"><div class="icon">${esc(s.emoji)}</div><div class="label">${esc(s.nombre)}</div><div class="sub">${esc(s.desc)}</div></div>
+    </div>`).join('');
+}
+
+function renderOperadores() {
+  document.getElementById('operadorGrid').innerHTML = OPERADORES_LISTA.map(o =>
+    `<div class="opt-card" data-val="${esc(o.nombre)}" onclick="selectOperador(this,this.dataset.val)">
+      <div class="opt-card-inner"><div class="icon">${esc(o.icono||'🧑')}</div><div class="label">${esc(o.nombre)}</div></div>
+    </div>`).join('');
+}
 
 let state = {prep:null, sabor:null, nivel:null, tostosSabor:null, mariscos:[], size:null, qty:1,
              micheladaCerveza:null, micheladaPreparado:null, micheladaTipo:null, micheladaCamaron:null};
@@ -734,13 +650,6 @@ let selectedFecha = null;
 let selectedGrupo = null;
 let selectedOperador = null;
 
-const OPERADORES = {
-  'Benjamín': '5213141252324',
-  'Cinthia':  '5213141576578',
-  'Citlali':  '5213141023251',
-  'Víctor':   '5213141650688',
-};
-
 function selectOperador(el, nombre) {
   document.querySelectorAll('#operadorGrid .opt-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
@@ -748,22 +657,11 @@ function selectOperador(el, nombre) {
   validateCheckout();
 }
 
-const GRUPOS = [
-  {key:'bachillerato', label:'🏫 Bachillerato'},
-  {key:'primaria',     label:'📚 Primaria'},
-  {key:'futbol',       label:'⚽ Fútbol'},
-  {key:'trabajo',      label:'💼 Trabajo'},
-  {key:'familia',      label:'👨‍👩‍👧 Familia'},
-  {key:'amigos',       label:'🎉 Amigos'},
-  {key:'iglesia',      label:'⛪ Iglesia'},
-  {key:'otro',         label:'✏️ Otro...'},
-];
-
 function renderGrupos() {
   const container = document.getElementById('grupoOpts');
   if (!container) return;
   container.innerHTML = GRUPOS.map(g =>
-    `<div class="grupo-chip ${g.key==='otro'?'custom-chip':''}" data-key="${g.key}" onclick="selectGrupo(this,'${g.key}','${g.label}')">${g.label}</div>`
+    `<div class="grupo-chip ${g.key==='otro'?'custom-chip':''}" data-key="${esc(g.key)}" data-label="${esc(g.label)}" onclick="selectGrupo(this,this.dataset.key,this.dataset.label)">${esc(g.label)}</div>`
   ).join('');
 }
 
@@ -787,8 +685,10 @@ function renderFechas() {
   const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const DIAS_CORTOS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  // Días objetivo: jueves=4, viernes=5, sábado=6
-  const targets = [4, 5, 6];
+  // Días objetivo desde config.dias_entrega (ej. "jueves,viernes,sabado")
+  const targets = (CONFIG.dias_entrega || 'jueves,viernes,sabado').split(',')
+    .map(d => DIAS.findIndex(x => norm(x) === norm(d))).filter(i => i >= 0);
+  const horaCorte = Number(CONFIG.hora_corte) || 21;
   const today = new Date();
   // Encontrar el jueves de la semana actual (o próxima si ya pasó el sábado)
   const dayOfWeek = today.getDay(); // 0=dom ... 6=sáb
@@ -804,9 +704,9 @@ function renderFechas() {
   container.innerHTML = targets.map(target => {
     const d = new Date(today);
     const diff = target - dayOfWeek + (target < dayOfWeek ? 7 : 0);
-    // Si es el mismo día target pero ya pasaron las 9pm, ir a la siguiente semana
+    // Si es el mismo día target pero ya pasó la hora de corte, ir a la siguiente semana
     const sameDay = diff === 0;
-    const addWeek = sameDay && today.getHours() >= 21;
+    const addWeek = sameDay && today.getHours() >= horaCorte;
     d.setDate(today.getDate() + diff + (addWeek ? 7 : 0));
 
     const diaName = DIAS[d.getDay()];
@@ -826,13 +726,8 @@ function renderFechas() {
 }
 
 function renderHoras() {
-  const slots = [
-    '13:00','13:30',
-    '14:00','14:30',
-    '15:00','15:30',
-    '16:00','16:30',
-    '17:00',
-  ];
+  const slots = (CONFIG.horarios || '13:00,13:30,14:00,14:30,15:00,15:30,16:00,16:30,17:00')
+    .split(',').map(s => s.trim()).filter(Boolean);
   const container = document.getElementById('horaOpts');
   if (!container) return;
   container.innerHTML = slots.map(slot => {
@@ -860,29 +755,22 @@ function selectFecha(el) {
   validateCheckout();
 }
 
-// Init sizes
-document.getElementById('sizeOpts').innerHTML = SIZES.map(s =>
-  `<div class="size-card" data-key="${s.key}" onclick="selectSize(this,'${s.key}')">
-    <div class="s-icon">${s.icon}</div><div class="s-label">${s.label}</div>
-  </div>`).join('');
+function renderSizes() {
+  document.getElementById('sizeOpts').innerHTML = SIZES.map(s =>
+    `<div class="size-card" data-key="${esc(s.key)}" onclick="selectSize(this,this.dataset.key)">
+      <div class="s-icon">${esc(s.icon)}</div><div class="s-label">${esc(s.label)}</div>
+    </div>`).join('');
+}
 
-const MARISCOS_DEFAULT = [
-  {key:'Pescado',                 icon:'🐟', label:'Pescado'},
-  {key:'Camarón cocido en limón', icon:'🦐', label:'Camarón cocido en limón 🍋'},
-  {key:'Camarón cocido en agua',  icon:'🦐', label:'Camarón cocido en agua 💧'},
-  {key:'Pulpo',                   icon:'🐙', label:'Pulpo'},
-];
-const MARISCOS_POR_PREP = {
-  'Tacos Empanizados': [
-    {key:'Pescado empanizado',  icon:'🐟', label:'Pescado empanizado'},
-    {key:'Camarón empanizado',  icon:'🦐', label:'Camarón empanizado'},
-  ],
-};
+// Mariscos del grupo del producto (columna "mariscos" del producto)
+function mariscosDe(prep) {
+  const grupo = getProducto(prep)?.mariscos || 'general';
+  return (MENU.mariscos||[]).filter(m => m.grupo === grupo && activo(m));
+}
 function renderMariscos(prep) {
-  const items = MARISCOS_POR_PREP[prep] || MARISCOS_DEFAULT;
-  document.getElementById('mariscosOpts').innerHTML = items.map(m =>
-    `<div class="marisco-row" onclick="toggleMarisco(this,'${m.key}')">
-      <div class="m-left"><span class="m-icon">${m.icon}</span><div><div class="m-name">${m.label}</div></div></div>
+  document.getElementById('mariscosOpts').innerHTML = mariscosDe(prep).map(m =>
+    `<div class="marisco-row" data-val="${esc(m.clave)}" onclick="toggleMarisco(this,this.dataset.val)">
+      <div class="m-left"><span class="m-icon">${esc(m.icono)}</span><div><div class="m-name">${esc(m.etiqueta||m.clave)}</div></div></div>
       <div class="check-box">✓</div>
     </div>`
   ).join('');
@@ -890,33 +778,33 @@ function renderMariscos(prep) {
 
 function renderMicheladaSection() {
   document.getElementById('micheladaCervezaOpts').innerHTML = MICHELADAS_CERVEZAS.map(c =>
-    `<div class="michelada-opt-row" onclick="selectMicheladaCerveza(this,'${c.key}')">
+    `<div class="michelada-opt-row" data-val="${esc(c.key)}" onclick="selectMicheladaCerveza(this,this.dataset.val)">
       <div class="michelada-opt-inner">
-        <span class="m-icon">${c.icon}</span>
-        <div class="m-name">${c.key}</div>
+        <span class="m-icon">${esc(c.icon)}</span>
+        <div class="m-name">${esc(c.key)}</div>
       </div>
     </div>`).join('');
   document.getElementById('micheladaPreparadoOpts').innerHTML = MICHELADAS_PREPARADOS.map(p =>
-    `<div class="michelada-opt-row" onclick="selectMicheladaPreparado(this,'${p.key}')">
+    `<div class="michelada-opt-row" data-val="${esc(p.key)}" onclick="selectMicheladaPreparado(this,this.dataset.val)">
       <div class="michelada-opt-inner">
-        <span class="m-icon">🥂</span>
-        <div class="m-name">${p.key}</div>
-        <div class="mc-desc">${p.desc}</div>
+        <span class="m-icon">${esc(p.icon)}</span>
+        <div class="m-name">${esc(p.key)}</div>
+        <div class="mc-desc">${esc(p.desc)}</div>
       </div>
     </div>`).join('');
   document.getElementById('micheladaTipoOpts').innerHTML = MICHELADAS_TIPOS.map(t =>
-    `<div class="michelada-opt-row" onclick="selectMicheladaTipo(this,'${t.key}')">
+    `<div class="michelada-opt-row" data-val="${esc(t.key)}" onclick="selectMicheladaTipo(this,this.dataset.val)">
       <div class="michelada-opt-inner">
-        <span class="m-icon">${t.icon}</span>
-        <div class="m-name">${t.key}</div>
+        <span class="m-icon">${esc(t.icon)}</span>
+        <div class="m-name">${esc(t.key)}</div>
         <div class="mc-price">$${t.precio}</div>
       </div>
     </div>`).join('');
   document.getElementById('micheladaCamaronOpts').innerHTML = MICHELADAS_CAMARON.map(c =>
-    `<div class="michelada-opt-row" onclick="selectMicheladaCamaron(this,'${c.key}')">
+    `<div class="michelada-opt-row" data-val="${esc(c.key)}" onclick="selectMicheladaCamaron(this,this.dataset.val)">
       <div class="michelada-opt-inner">
-        <span class="m-icon">${c.icon}</span>
-        <div class="m-name">${c.key}</div>
+        <span class="m-icon">${esc(c.icon)}</span>
+        <div class="m-name">${esc(c.key)}</div>
       </div>
     </div>`).join('');
 }
@@ -951,39 +839,36 @@ function selectPrep(el, val) {
   updateSizeLabels();
   document.querySelectorAll('.marisco-row, .size-card').forEach(r=>r.classList.remove('selected'));
 
-  const isAguachile      = val === 'Aguachile Mariposa' || val === 'Aguachile Botana';
-  const isTacos          = val === 'Tacos Empanizados';
-  const isMichelada        = val === 'Micheladas';
-  const isOpcional       = val === 'Ceviche' || val === 'Tahitiana' || isTacos;
-  const isTostiaguachile = val === 'Tostiaguachile';
-  const isPorPieza       = isTostiaguachile || isTacos || isMichelada;
+  const f = flags(getProducto(val));
+  const conPicor = f.picor !== 'no';
 
   // Mostrar/ocultar sección michelada vs sección mariscos normal
-  document.getElementById('mariscoTitle').style.display   = isMichelada ? 'none' : 'block';
-  document.getElementById('mariscosOpts').style.display   = isMichelada ? 'none' : 'block';
-  document.getElementById('micheladaSection').style.display = isMichelada ? 'block' : 'none';
-  if (isMichelada) {
+  document.getElementById('mariscoTitle').style.display     = f.marisco ? 'block' : 'none';
+  document.getElementById('mariscosOpts').style.display     = f.marisco ? 'block' : 'none';
+  document.getElementById('micheladaSection').style.display = f.michelada ? 'block' : 'none';
+  if (f.michelada) {
     document.getElementById('micheladaCamaronSection').style.display = 'none';
     renderMicheladaSection();
-  } else {
+  } else if (f.marisco) {
     renderMariscos(val);
   }
 
-  document.getElementById('picorSection').style.display = isMichelada ? 'none' : 'block';
-  document.getElementById('saborWrap').style.display = (isAguachile || isTostiaguachile) ? 'block' : 'none';
-  document.getElementById('tostosWrap').style.display = isTostiaguachile ? 'block' : 'none';
-  document.getElementById('picorOpcionalBadge').style.display = isOpcional ? 'inline-block' : 'none';
+  document.getElementById('picorSection').style.display = (conPicor || f.conSabor || f.tostitos) ? 'block' : 'none';
+  document.getElementById('nivelWrap').style.display = conPicor ? 'block' : 'none';
+  document.getElementById('saborWrap').style.display = f.conSabor ? 'block' : 'none';
+  document.getElementById('tostosWrap').style.display = f.tostitos ? 'block' : 'none';
+  document.getElementById('picorOpcionalBadge').style.display = f.picor === 'opcional' ? 'inline-block' : 'none';
 
-  // Tamaños: ocultar para preparaciones con precio por pieza
+  // Tamaños: ocultar para productos con precio por pieza
   document.querySelector('.sec-title[data-section="tamano"]').style.display = 'block';
-  document.getElementById('tamanoTitleText').textContent = isPorPieza ? 'Cantidad' : 'Cantidad y tamaño';
-  document.getElementById('sizeOpts').style.display = isPorPieza ? 'none' : 'grid';
-  if (isPorPieza) { state.size = 'pieza'; }
+  document.getElementById('tamanoTitleText').textContent = f.porPieza ? 'Cantidad' : 'Cantidad y tamaño';
+  document.getElementById('sizeOpts').style.display = f.porPieza ? 'none' : 'grid';
+  if (f.porPieza) { state.size = 'pieza'; }
 
-  if (!isMichelada) {
-    renderSabores(isAguachile || isTostiaguachile);
+  renderSabores(f.conSabor);
+  if (conPicor) {
     renderNiveles(true);
-    if (isOpcional) {
+    if (f.picor === 'opcional') {
       state.nivel = 'sin';
       document.querySelector('.nivel-card[data-nivel="sin"]')?.classList.add('selected');
     }
@@ -994,10 +879,10 @@ function selectPrep(el, val) {
 function renderSabores(show) {
   if (!show) return;
   document.getElementById('saborOpts').innerHTML = Object.entries(SABORES).map(([k,s]) =>
-    `<div class="sabor-card" data-sabor="${k}" onclick="selectSabor(this,'${k}')">
-      <div class="s-emoji">${s.emoji}</div>
-      <div class="s-name">${s.nombre}</div>
-      <div class="s-desc">${s.desc}</div>
+    `<div class="sabor-card" data-sabor="${esc(k)}" onclick="selectSabor(this,this.dataset.sabor)">
+      <div class="s-emoji">${esc(s.emoji)}</div>
+      <div class="s-name">${esc(s.nombre)}</div>
+      <div class="s-desc">${esc(s.desc)}</div>
     </div>`).join('');
 }
 
@@ -1005,9 +890,9 @@ function renderNiveles(incluirSin) {
   document.getElementById('nivelOpts').innerHTML = NIVELES
     .filter(n => incluirSin || n.key !== 'sin')
     .map(n =>
-      `<div class="nivel-card ${n.key==='sin'?'sin-picor':''}" data-nivel="${n.key}" onclick="selectNivel(this,'${n.key}')">
-        <div class="n-icon">${n.icon}</div>
-        <div class="n-label">${n.label}</div>
+      `<div class="nivel-card ${n.key==='sin'?'sin-picor':''}" data-nivel="${esc(n.key)}" onclick="selectNivel(this,this.dataset.nivel)">
+        <div class="n-icon">${esc(n.icon)}</div>
+        <div class="n-label">${esc(n.label)}</div>
       </div>`).join('');
 }
 
@@ -1032,20 +917,27 @@ function selectNivel(el, val) {
   validate();
 }
 
+// Mariscos marcados "solo_combinado" (ej. Pulpo) no se pueden pedir solos
+function soloCombinado(clave) {
+  return mariscosDe(state.prep).find(m => m.clave === clave && esSi(m.solo_combinado));
+}
+
 function toggleMarisco(el, val) {
   if (el.classList.contains('selected')) {
     el.classList.remove('selected');
     state.mariscos = state.mariscos.filter(m => m !== val);
-    // Si quedan solo pulpo, deseleccionarlo también
-    if (state.mariscos.length === 1 && state.mariscos[0] === 'Pulpo') {
+    // Si solo quedan mariscos que no pueden ir solos, deseleccionarlos también
+    const restante = state.mariscos.length && state.mariscos.every(soloCombinado) ? soloCombinado(state.mariscos[0]) : null;
+    if (restante) {
       state.mariscos = [];
       document.querySelectorAll('.marisco-row').forEach(r => r.classList.remove('selected'));
-      showPulpoHint();
+      showPulpoHint(restante);
     }
   } else {
-    // Bloquear pulpo solo
-    if (val === 'Pulpo' && state.mariscos.length === 0) {
-      showPulpoHint();
+    // Bloquear marisco que no puede ir solo
+    const solo = soloCombinado(val);
+    if (solo && state.mariscos.length === 0) {
+      showPulpoHint(solo);
       return;
     }
     el.classList.add('selected');
@@ -1054,16 +946,16 @@ function toggleMarisco(el, val) {
   validate();
 }
 
-function showPulpoHint() {
+function showPulpoHint(marisco) {
   let hint = document.getElementById('pulpoHint');
   if (!hint) {
     hint = document.createElement('div');
     hint.id = 'pulpoHint';
     hint.style.cssText = 'background:#fff5f0;border:1.5px solid var(--naranja);border-radius:10px;padding:8px 12px;font-size:.78rem;font-weight:700;color:var(--naranja-dark);margin:0 0 10px;transition:opacity .4s;';
-    hint.textContent = '🐙 El pulpo debe combinarse con otro marisco';
     const ref = document.getElementById('mariscosOpts');
     ref.parentNode.insertBefore(hint, ref.nextSibling);
   }
+  hint.textContent = `${marisco.icono} ${marisco.clave} debe combinarse con otro marisco`;
   hint.style.opacity = '1';
   hint.style.display = 'block';
   clearTimeout(hint._timer);
@@ -1081,11 +973,9 @@ function selectSize(el, val) {
 }
 
 function getSizeLabel(key, qty) {
-  const plural = qty >= 2;
-  if (key === 'kg')    return plural ? 'KILOS'     : 'KILO';
-  if (key === 'lt')    return plural ? 'LITROS'    : 'LITRO';
-  if (key === 'medio') return plural ? '½ LITROS'  : '½ LITRO';
-  return key;
+  const s = SIZES.find(x => x.key === key);
+  if (!s) return key;
+  return qty >= 2 ? s.plural : s.label;
 }
 
 function updateSizeLabels() {
@@ -1102,52 +992,41 @@ function changeQty(delta) {
 }
 
 function validate() {
-  if (state.prep === 'Micheladas') {
+  const prod = getProducto(state.prep);
+  const f = flags(prod);
+  if (f.michelada) {
     const tipoData = MICHELADAS_TIPOS.find(t => t.key === state.micheladaTipo);
     const camaronOk = !tipoData?.camaron || !!state.micheladaCamaron;
     document.getElementById('btnAddItem').disabled =
       !(state.micheladaCerveza && state.micheladaPreparado && state.micheladaTipo && camaronOk);
     return;
   }
-  const isAguachile      = state.prep === 'Aguachile Mariposa' || state.prep === 'Aguachile Botana';
-  const isTostiaguachile = state.prep === 'Tostiaguachile';
-  const isTacos          = state.prep === 'Tacos Empanizados';
-  const saborOk   = (isAguachile || isTostiaguachile) ? !!state.sabor : true;
-  const tostosOk  = isTostiaguachile ? !!state.tostosSabor : true;
-  const nivelOk   = !!state.nivel;
-  const sizeOk    = (isTostiaguachile || isTacos) ? true : !!state.size;
-  document.getElementById('btnAddItem').disabled = !(state.prep && state.mariscos.length && sizeOk && saborOk && tostosOk && nivelOk);
+  const mariscosOk = f.marisco ? state.mariscos.length > 0 : true;
+  const saborOk    = f.conSabor ? !!state.sabor : true;
+  const tostosOk   = f.tostitos ? !!state.tostosSabor : true;
+  const nivelOk    = f.picor === 'no' ? true : !!state.nivel;
+  const sizeOk     = f.porPieza ? true : !!state.size;
+  document.getElementById('btnAddItem').disabled = !(prod && mariscosOk && sizeOk && saborOk && tostosOk && nivelOk);
 }
 
 function getUnitPrice() {
-  if (state.prep === 'Micheladas') {
+  const prod = getProducto(state.prep);
+  if (!prod) return 0;
+  const f = flags(prod);
+  if (f.michelada) {
     return MICHELADAS_TIPOS.find(t => t.key === state.micheladaTipo)?.precio || 0;
   }
-  const isTostiaguachile = state.prep === 'Tostiaguachile';
-  const isTacos          = state.prep === 'Tacos Empanizados';
-  const isPorPieza       = isTostiaguachile || isTacos;
-  if (!state.prep || !state.mariscos.length) return 0;
-  if (!isPorPieza && !state.size) return 0;
-  const table = PRECIOS[state.prep]; if (!table) return 0;
-  const mixto = state.mariscos.length > 1;
-  const tienePulpo = state.mariscos.includes('Pulpo');
-  let key;
-  if (state.prep === 'Aguachile Mariposa' || state.prep === 'Aguachile Botana') {
-    if (state.sabor) {
-      const c = state.sabor.charAt(0).toUpperCase() + state.sabor.slice(1);
-      key = mixto ? `${c} - Mixto` : `${c} - ${state.mariscos[0]}`;
-    }
-  } else if (isPorPieza) {
-    key = mixto ? 'Mixto' : (tienePulpo ? 'Pulpo' : state.mariscos[0]);
-    return table[key]?.pieza || 0;
-  } else {
-    key = mixto ? 'Mixto' : state.mariscos[0];
-  }
-  return table[key]?.[state.size] || 0;
+  if (f.simple) return buscarPrecio(prod, [], 'pieza');
+  if (!state.mariscos.length) return 0;
+  if (!f.porPieza && !state.size) return 0;
+  const saborNombre = f.conSabor && state.sabor ? SABORES[state.sabor]?.nombre : '';
+  if (f.conSabor && !saborNombre) return 0;
+  return buscarPrecio(prod, state.mariscos, f.porPieza ? 'pieza' : state.size, saborNombre);
 }
 
 function addToCart() {
-  if (state.prep === 'Micheladas') {
+  const f = flags(getProducto(state.prep));
+  if (f.michelada) {
     const unitPrice = getUnitPrice();
     cart.push({
       prep: 'Michelada',
@@ -1182,35 +1061,32 @@ function addToCart() {
   }
 
   const unitPrice = getUnitPrice();
-  const isAguachile = state.prep === 'Aguachile Mariposa' || state.prep === 'Aguachile Botana';
-
-  const isTostiaguachile = state.prep === 'Tostiaguachile';
+  const sabor  = f.conSabor && state.sabor ? SABORES[state.sabor] : null;
+  const tostos = f.tostitos && state.tostosSabor ? TOSTOS_SABORES[state.tostosSabor] : null;
 
   // Display en carrito/resumen
-  const saborLabel  = (isAguachile || isTostiaguachile) && state.sabor ? ` ${SABORES[state.sabor].emoji} ${SABORES[state.sabor].nombre}` : '';
-  const tostosLabel = isTostiaguachile && state.tostosSabor ? ` ${TOSTOS_SABORES[state.tostosSabor].emoji} Tostitos ${TOSTOS_SABORES[state.tostosSabor].nombre}` : '';
+  const saborLabel  = sabor ? ` ${sabor.emoji} ${sabor.nombre}` : '';
+  const tostosLabel = tostos ? ` ${tostos.emoji} Tostitos ${tostos.nombre}` : '';
   const nivelLabel  = state.nivel === 'sin' ? ' 🚫 Sin picante'
                     : state.nivel ? ` 🌶️×${state.nivel}` : '';
   const picorDisplay = saborLabel + tostosLabel + nivelLabel;
 
   // Para WhatsApp
-  const saborEnMsg  = isAguachile && state.sabor
-    ? `${SABORES[state.sabor].emoji} ${SABORES[state.sabor].nombre}`
-    : isTostiaguachile && state.sabor && state.tostosSabor
-      ? `${SABORES[state.sabor].emoji} ${SABORES[state.sabor].nombre} + ${TOSTOS_SABORES[state.tostosSabor].emoji} Tostitos ${TOSTOS_SABORES[state.tostosSabor].nombre}`
-      : '';
+  const saborEnMsg = sabor
+    ? `${sabor.emoji} ${sabor.nombre}` + (tostos ? ` + ${tostos.emoji} Tostitos ${tostos.nombre}` : '')
+    : '';
   const nivelMsg = state.nivel === 'sin' ? 'Sin picante' : state.nivel ? `Nivel ${state.nivel}` : '';
   const picorMsg = nivelMsg;
 
-  const isTosti = state.prep === 'Tostiaguachile' || state.prep === 'Tacos Empanizados';
   cart.push({
     prep: state.prep,
+    type: f.simple ? 'simple' : undefined,
     picorDisplay,
     picorMsg,
     saborEnMsg,
     mariscos: [...state.mariscos],
     size: state.size,
-    sizeLabel: isTosti ? 'Pieza' : getSizeLabel(state.size, state.qty),
+    sizeLabel: f.porPieza ? 'Pieza' : getSizeLabel(state.size, state.qty),
     qty: state.qty,
     unitPrice,
     price: unitPrice * state.qty,
@@ -1295,15 +1171,17 @@ function getGrandTotal() {
 }
 
 function renderExtras() {
-  const renderGroup = (items, startIdx) => items.map((item, i) => {
-    const idx = startIdx + i;
+  // ALL_EXTRAS ya viene agrupado por sección; el índice global identifica cada fila
+  document.getElementById('extrasOpts').innerHTML = ALL_EXTRAS.map((item, idx) => {
+    const nuevaSeccion = idx > 0 && item.seccion !== ALL_EXTRAS[idx-1].seccion;
+    const header = nuevaSeccion ? `<div class="extras-subheader">${esc(item.icon)} ${esc(item.seccion)}</div>` : '';
     const qty = extrasQty[item.key] || 0;
     const precioStr = item.precio % 1 === 0 ? `$${item.precio}` : `$${item.precio.toFixed(2)}`;
-    return `<div class="extra-row${qty > 0 ? ' active' : ''}" id="extra-row-${idx}">
+    return `${header}<div class="extra-row${qty > 0 ? ' active' : ''}" id="extra-row-${idx}">
       <div class="extra-left">
-        <span class="extra-icon">${item.icon}</span>
+        <span class="extra-icon">${esc(item.icon)}</span>
         <div>
-          <div class="extra-name">${item.key}</div>
+          <div class="extra-name">${esc(item.key)}</div>
           <div class="extra-precio">${precioStr} c/u</div>
         </div>
       </div>
@@ -1314,11 +1192,6 @@ function renderExtras() {
       </div>
     </div>`;
   }).join('');
-
-  document.getElementById('extrasOpts').innerHTML =
-    renderGroup(EXTRAS_LISTA, 0) +
-    `<div class="extras-subheader">🥤 Refrescos 600ml</div>` +
-    renderGroup(REFRESCOS_LISTA, EXTRAS_LISTA.length);
 }
 
 function changeExtra(idx, delta) {
@@ -1360,7 +1233,7 @@ function renderCart() {
          <span class="tag">${item.sizeLabel}${item.micheladaCamaron ? ' · ' + item.micheladaCamaron : ''}</span>
          ${item.notes ? `<span class="tag">📝 ${item.notes}</span>` : ''}`
       : `<span class="tag">${item.sizeLabel}</span>
-         <span class="tag">${item.mariscos.join(' + ')}</span>
+         ${item.mariscos.length ? `<span class="tag">${item.mariscos.join(' + ')}</span>` : ''}
          ${item.picorDisplay ? `<span class="tag">${item.picorDisplay}</span>` : ''}
          ${item.notes ? `<span class="tag">📝 ${item.notes}</span>` : ''}`;
     return `<div class="order-item">
@@ -1554,7 +1427,7 @@ function renderSummary() {
       const qtyStr = item.qty > 1 ? ` ×${item.qty}` : '';
       const desc = item.type === 'michelada'
         ? `Michelada ${item.micheladaCerveza} — ${item.micheladaPreparado} — ${item.sizeLabel}${item.micheladaCamaron ? ' ('+item.micheladaCamaron+')' : ''}${qtyStr}`
-        : `${item.prep} — ${item.mariscos.join('+')} (${item.sizeLabel}${qtyStr})${item.picorDisplay ? ' | '+item.picorDisplay : ''}`;
+        : `${item.prep}${item.mariscos.length ? ' — ' + item.mariscos.join('+') : ''} (${item.sizeLabel}${qtyStr})${item.picorDisplay ? ' | '+item.picorDisplay : ''}`;
       return `<div class="summary-item">
         <span>${desc}</span>
         <strong>$${item.price.toFixed(2)}</strong>
@@ -1618,7 +1491,7 @@ function sendWhatsApp() {
       msg += ` | 💰 $${item.price.toFixed(2)}\n`;
     } else {
       msg += `${i+1}. *${item.prep}*${item.saborEnMsg ? ` ${item.saborEnMsg}` : ''}${qtyStr}\n`;
-      msg += `   🦐 ${item.mariscos.join(' + ')} | 📦 ${item.sizeLabel || 'Pieza'}`;
+      msg += `   ${item.mariscos.length ? `🦐 ${item.mariscos.join(' + ')} | ` : ''}📦 ${item.sizeLabel || 'Pieza'}`;
       if (item.picorMsg) msg += ` | 🌶️ ${item.picorMsg}`;
       msg += ` | 💰 $${item.price.toFixed(2)}\n`;
     }
@@ -1646,7 +1519,7 @@ function sendWhatsApp() {
     msg += `🏃 *Pasa a recoger en local*`;
   }
 
-  const phone = OPERADORES[selectedOperador] || '5213141252324';
+  const phone = OPERADORES[selectedOperador] || CONFIG.whatsapp_respaldo || '5213141252324';
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   // Encode preserving emojis correctly for WhatsApp Web (desktop)
@@ -1674,6 +1547,17 @@ function sendWhatsApp() {
     if (!win) window.location.href = url;
   }
 }
+
+// Arranque: cargar el menú y pintar la pantalla 1
+(async function iniciar() {
+  const menu = await cargarMenu();
+  if (!menu) {
+    document.getElementById('prepOpts').innerHTML =
+      '<div class="menu-estado">😕 No se pudo cargar el menú. Revisa tu conexión y recarga la página.</div>';
+    return;
+  }
+  aplicarMenu(menu);
+})();
 
 
 </script>
