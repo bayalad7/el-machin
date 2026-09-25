@@ -113,7 +113,11 @@ Pon `activo` = **no** (productos, mariscos, extras, operadores, opciones de mich
 
 ### Pedidos
 - **📋 Pedidos** muestra por defecto los de esta semana según la fecha de entrega. Toca un pedido para ver el detalle.
-- Cambia el **estado** (nuevo → confirmado → entregado, o cancelado) para llevar el control.
+- El **estado** avanza con botones, siempre en este orden:
+  - 🆕 **Nuevo** → botones **✅ Confirmar** y **✖️ Cancelar**.
+  - ✅ **Confirmado** → botón **📦 Entregado**.
+  - 📦 **Entregado** y ✖️ **Cancelado** son finales: ya no muestran botones y no se pueden regresar.
+- Toda acción que cambia algo (cambiar estado, guardar envío, eliminar, restaurar, descartar) pide confirmación en una ventana. **Regresar**, tocar fuera de la ventana o la tecla Esc cancelan la acción.
 - **⚠️ revisar** indica que el total que vio el cliente no coincide con los precios actuales (por ejemplo, si cambiaste un precio mientras armaba su pedido).
 - **⬇️ CSV** descarga los pedidos filtrados para abrirlos en Excel.
 - **🗑️ Eliminar pedido** (dentro del detalle) sirve para quitar pedidos de prueba o duplicados. Deja de aparecer en el panel y en los totales; se guarda una copia en `datos/papelera/` en el servidor por si hay que recuperarlo (basta con regresar el archivo a `datos/pedidos/AAAA-MM/`). Si el cliente también era de prueba, elimínalo en **👥 Clientes**. Para un pedido real que no se entregó, mejor usa el estado *cancelado*.

@@ -8,7 +8,14 @@ require __DIR__ . '/comun.php';
 define('RESPALDOS_DIR', DATA_DIR . '/respaldos');
 define('MAX_RESPALDOS', 60);
 define('SESION_HORAS', 8);
-const ESTADOS_PEDIDO = ['nuevo', 'confirmado', 'entregado', 'cancelado'];
+// Flujo de estados del pedido: nuevo → confirmado → entregado, o nuevo → cancelado.
+// entregado y cancelado son finales. Mismo flujo que ACCIONES_ESTADO en admin/index.html.
+const TRANSICIONES_PEDIDO = [
+    'nuevo'      => ['confirmado', 'cancelado'],
+    'confirmado' => ['entregado'],
+    'entregado'  => [],
+    'cancelado'  => [],
+];
 
 session_name('machin_admin');
 session_set_cookie_params([
@@ -228,10 +235,14 @@ case 'POST estado_pedido':
     exigir_sesion(); exigir_csrf();
     $datos = leer_cuerpo_json(4096);
     $estado = (string) ($datos['estado'] ?? '');
-    if (!in_array($estado, ESTADOS_PEDIDO, true)) error_api('Estado inválido');
+    if (!isset(TRANSICIONES_PEDIDO[$estado])) error_api('Estado inválido');
     $ruta = ruta_pedido((string) ($datos['folio'] ?? ''));
     $p = $ruta ? leer_json($ruta) : null;
     if (!$p) error_api('Pedido no encontrado', 404);
+    $actual = $p['estado'] ?? 'nuevo';
+    if (!in_array($estado, TRANSICIONES_PEDIDO[$actual] ?? [], true)) {
+        error_api("El pedido está $actual y no se puede cambiar a $estado. Recarga la lista.", 409);
+    }
     $p['estado'] = $estado;
     $p['historial'][] = ['estado' => $estado, 'fecha' => date('c')];
     escribir_json($ruta, $p);

@@ -115,6 +115,21 @@
   .chip-lluvia { background: #e8f3ff; color: #1e6fb5; }
   .chip-lluvia.on { background: #1e8bc3; color: #fff; }
 
+  /* Estado del pedido y modal de confirmación */
+  .estado-chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 20px; padding: 3px 10px; font-size: .75rem; font-weight: 800; }
+  .estado-chip.nuevo { background: #fff0e8; color: var(--naranja-dark); }
+  .estado-chip.confirmado { background: #fff8d6; color: #8a6d00; }
+  .estado-chip.entregado { background: #e6f8ee; color: var(--verde-dark); }
+  .estado-chip.cancelado { background: #eee; color: #777; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 900; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: #fff; border-radius: 22px; padding: 26px 22px 20px; max-width: 360px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,.18); }
+  .modal-icon { font-size: 2.6rem; margin-bottom: 6px; }
+  .modal-title { font-family: 'Fredoka One', cursive; font-size: 1.25rem; margin-bottom: 8px; }
+  .modal-msg { font-size: .88rem; color: var(--texto-suave); line-height: 1.5; margin-bottom: 20px; }
+  .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-rojo { background: var(--rojo); color: #fff; }
+
   .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #1a1a1a; color: #fff; padding: 12px 20px; border-radius: 50px; font-size: .88rem; font-weight: 700; z-index: 999; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; max-width: calc(100vw - 32px); }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .oculto { display: none !important; }
@@ -167,6 +182,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal"></div>
 
 <script>
 const API = '../api/admin.php';
@@ -188,6 +204,36 @@ function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Modal de confirmación para toda acción que cambia datos. Devuelve una promesa con true/false.
+// `mensaje` puede llevar HTML: quien llama debe escapar los datos con esc().
+function confirmar({titulo, mensaje = '', boton = 'Sí, continuar', tipo = 'primario', icono = '❓'}) {
+  return new Promise(resolve => {
+    const ov = document.getElementById('modal');
+    ov.innerHTML = `<div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+      <div class="modal-icon">${icono}</div>
+      <div class="modal-title" id="modalTitulo">${esc(titulo)}</div>
+      <div class="modal-msg">${mensaje}</div>
+      <div class="modal-btns">
+        <button class="btn btn-claro" data-r="0">Regresar</button>
+        <button class="btn btn-${tipo}" data-r="1">${esc(boton)}</button>
+      </div></div>`;
+    ov.classList.add('show');
+    const cerrar = r => {
+      ov.classList.remove('show'); ov.innerHTML = '';
+      document.removeEventListener('keydown', tecla);
+      resolve(r);
+    };
+    const tecla = e => { if (e.key === 'Escape') cerrar(false); };
+    document.addEventListener('keydown', tecla);
+    ov.onclick = e => {
+      if (e.target === ov) return cerrar(false);
+      const b = e.target.closest('[data-r]');
+      if (b) cerrar(b.dataset.r === '1');
+    };
+    ov.querySelector('[data-r="1"]').focus();
+  });
 }
 
 async function api(accion, {metodo = 'GET', datos, params = {}} = {}) {
@@ -228,7 +274,8 @@ async function entrar(ev) {
 }
 
 async function salir() {
-  if (hayCambios() && !confirm('Tienes cambios sin guardar. ¿Salir de todos modos?')) return;
+  if (hayCambios() && !await confirmar({icono: '✏️', titulo: '¿Salir sin guardar?', boton: 'Salir', tipo: 'rojo',
+      mensaje: 'Tienes cambios en el menú que no se han guardado y se perderán.'})) return;
   await api('logout', {metodo: 'POST'});
   menu = null; menuOriginal = '';
   mostrarLogin('Sesión cerrada.');
@@ -273,7 +320,8 @@ async function guardarMenu() {
 }
 
 async function descartar() {
-  if (!confirm('¿Descartar todos los cambios sin guardar?')) return;
+  if (!await confirmar({icono: '↩️', titulo: '¿Descartar los cambios?', boton: 'Descartar', tipo: 'rojo',
+      mensaje: 'Se perderán todos los cambios del menú que no has guardado.'})) return;
   await cargarMenu();
   mostrarTab(tabActual);
 }
@@ -453,10 +501,11 @@ function moverFila(sec, i, d) {
   mostrarTab(tabActual); actualizarBarra();
 }
 
-function eliminarFila(sec, i) {
+async function eliminarFila(sec, i) {
   const f = menu[sec][i];
   const nombre = f.nombre || f.clave || f.producto || `fila ${i + 1}`;
-  if (!confirm(`¿Eliminar "${nombre}"? Si solo quieres ocultarlo, usa activo = no.`)) return;
+  if (!await confirmar({icono: '🗑️', titulo: `¿Eliminar "${nombre}"?`, boton: 'Eliminar', tipo: 'rojo',
+      mensaje: 'Si solo quieres ocultarlo, usa <b>activo = no</b>. El cambio se aplica al guardar el menú.'})) return;
   menu[sec].splice(i, 1);
   mostrarTab(tabActual); actualizarBarra();
 }
@@ -583,7 +632,7 @@ function htmlPedido(p) {
   return `<div class="pedido ${esc(p.estado)}" id="p-${esc(p.folio)}">
     <div class="pedido-top" onclick="abrirPedido('${esc(p.folio)}')">
       <div>
-        <div class="folio">${esc(p.folio)} · registrado ${esc(fechaReg)}</div>
+        <div class="folio">${chipEstado(p.estado)} ${esc(p.folio)} · registrado ${esc(fechaReg)}</div>
         <div class="cliente">${esc(p.cliente.nombre)} <span class="chip">📱 ${esc(p.cliente.telefono)}</span></div>
         <div class="meta">📅 ${esc(p.fecha_texto || p.fecha_entrega)} ⏰ ${esc(p.hora)} · ${entregaTxt}${p.forma_pago ? ` · ${p.forma_pago === 'transferencia' ? '🏦 Transferencia' : '💵 Efectivo'}` : ''} · 💼 ${esc(p.operador)}${p.grupo ? ' · ' + esc(p.grupo) : ''}</div>
       </div>
@@ -596,11 +645,12 @@ function htmlPedido(p) {
       ${articulos}${extras}
       ${p.entrega === 'domicilio' ? `<p style="margin-top:10px">📍 ${esc(p.direccion)}${p.referencia ? ` — ${esc(p.referencia)}` : ''}${gps}</p>
         <div class="envio-box" id="envio-${esc(p.folio)}"><div class="vacio" style="padding:10px">⏳ Cargando envío...</div></div>` : ''}
-      <div class="barra" style="margin-top:12px;margin-bottom:0">
-        <label>Estado:</label>
-        <select class="input" onchange="cambiarEstado('${esc(p.folio)}', this.value)">
-          ${['nuevo', 'confirmado', 'entregado', 'cancelado'].map(e => `<option ${e === p.estado ? 'selected' : ''}>${e}</option>`).join('')}
-        </select>
+      <div class="barra" style="margin-top:12px">
+        <label>Estado:</label> ${chipEstado(p.estado)}
+        ${(ACCIONES_ESTADO[p.estado] || []).map(a =>
+          `<button class="btn ${a.clase} btn-mini" onclick="cambiarEstado('${esc(p.folio)}','${a.estado}')">${a.boton}</button>`).join('')}
+      </div>
+      <div class="barra" style="margin-bottom:0">
         <a class="btn btn-claro btn-mini" href="https://wa.me/52${telDigits(p.cliente.telefono)}" target="_blank">💬 WhatsApp cliente</a>
         <button class="btn btn-peligro btn-mini" onclick="eliminarPedido('${esc(p.folio)}')">🗑️ Eliminar pedido</button>
       </div>
@@ -608,19 +658,58 @@ function htmlPedido(p) {
   </div>`;
 }
 
+// ── Flujo de estados ─────────────────────────────────────────────────
+// nuevo → confirmado → entregado, o nuevo → cancelado. entregado y cancelado son finales.
+// El servidor aplica el mismo flujo (TRANSICIONES_PEDIDO en api/admin.php).
+const ESTADOS = {
+  nuevo:      {icono: '🆕', nombre: 'Nuevo'},
+  confirmado: {icono: '✅', nombre: 'Confirmado'},
+  entregado:  {icono: '📦', nombre: 'Entregado'},
+  cancelado:  {icono: '✖️', nombre: 'Cancelado'},
+};
+const ACCIONES_ESTADO = {
+  nuevo: [
+    {estado: 'confirmado', boton: '✅ Confirmar', clase: 'btn-primario'},
+    {estado: 'cancelado',  boton: '✖️ Cancelar',  clase: 'btn-peligro'},
+  ],
+  confirmado: [
+    {estado: 'entregado', boton: '📦 Entregado', clase: 'btn-primario'},
+  ],
+};
+// Texto del modal de cada acción
+const DIALOGO_ESTADO = {
+  confirmado: {icono: '✅', titulo: '¿Confirmar el pedido?', boton: 'Sí, confirmar', tipo: 'primario',
+               nota: 'Después solo podrás marcarlo como entregado.'},
+  cancelado:  {icono: '✖️', titulo: '¿Cancelar el pedido?', boton: 'Sí, cancelar', tipo: 'rojo',
+               nota: 'Ya no se podrá confirmar ni entregar, y deja de contar en los totales. Esta acción no se puede deshacer.'},
+  entregado:  {icono: '📦', titulo: '¿Marcar como entregado?', boton: 'Sí, entregado', tipo: 'primario',
+               nota: 'El pedido queda cerrado y ya no tendrá más acciones.'},
+};
+
+const chipEstado = e => `<span class="estado-chip ${esc(e)}">${ESTADOS[e]?.icono ?? ''} ${esc(ESTADOS[e]?.nombre ?? e)}</span>`;
+
 async function cambiarEstado(folio, estado) {
+  const p = pedidos.find(x => x.folio === folio);
+  const d = DIALOGO_ESTADO[estado];
+  const ok = await confirmar({icono: d.icono, titulo: d.titulo, boton: d.boton, tipo: d.tipo,
+    mensaje: `<b>${esc(folio)}</b> · ${esc(p?.cliente.nombre ?? '')} · ${dinero(p?.total_final ?? p?.total_calculado)}<br><br>${d.nota}`});
+  if (!ok) return;
   const r = await api('estado_pedido', {metodo: 'POST', datos: {folio, estado}});
   if (!r.ok) { toast('⚠️ ' + r.error); return; }
-  const p = pedidos.find(x => x.folio === folio);
   if (p) p.estado = estado;
-  const el = document.getElementById('p-' + folio);
-  if (el) el.className = `pedido ${estado} abierto`;
-  toast(`Pedido ${folio}: ${estado}`);
+  pintarPedidos();
+  // Mantener abierto el pedido que se acaba de cambiar
+  if (document.getElementById('p-' + folio)) {
+    document.getElementById('p-' + folio).classList.add('abierto');
+    if (envioEdit[folio]) pintarEnvio(folio);
+  }
+  toast(`${ESTADOS[estado].icono} Pedido ${folio}: ${ESTADOS[estado].nombre.toLowerCase()}`);
 }
 
 async function eliminarPedido(folio) {
   const p = pedidos.find(x => x.folio === folio);
-  if (!confirm(`¿Eliminar el pedido ${folio} de ${p?.cliente.nombre ?? ''}?\n\nDejará de aparecer en el panel y en los totales. Se guarda una copia en la papelera del servidor.`)) return;
+  if (!await confirmar({icono: '🗑️', titulo: '¿Eliminar el pedido?', boton: 'Eliminar', tipo: 'rojo',
+      mensaje: `<b>${esc(folio)}</b> · ${esc(p?.cliente.nombre ?? '')}<br><br>Dejará de aparecer en el panel y en los totales. Se guarda una copia en la papelera del servidor.`})) return;
   const r = await api('eliminar_pedido', {metodo: 'POST', datos: {folio}});
   if (!r.ok) { toast('⚠️ ' + r.error); return; }
   pedidos = pedidos.filter(x => x.folio !== folio);
@@ -835,9 +924,13 @@ function editarEnvio(el, modo) {
 
 async function guardarEnvio(folio) {
   const {gps, _sucio, ...envio} = envioEdit[folio];
+  const p = pedidos.find(x => x.folio === folio);
+  const total = Number(p.total_calculado) + Number(envio.tarifa);
+  if (!await confirmar({icono: '🛵', titulo: '¿Guardar envío?', boton: 'Guardar', tipo: 'primario',
+      mensaje: `<b>${esc(folio)}</b> · ${esc(p.cliente.nombre)}<br>Pedido ${dinero(p.total_calculado)} + envío ${dinero(envio.tarifa)}<br>` +
+               `<b>Total: ${dinero(total)}</b> (${envio.forma_pago === 'transferencia' ? '🏦 transferencia' : '💵 efectivo'})`})) return;
   const r = await api('envio_pedido', {metodo: 'POST', datos: {folio, envio}});
   if (!r.ok) { toast('⚠️ ' + r.error); return; }
-  const p = pedidos.find(x => x.folio === folio);
   p.envio = r.envio; p.total_final = r.total_final;
   envioEdit[folio] = {...r.envio, gps};
   pintarPedidos();
@@ -1027,7 +1120,8 @@ async function guardarCliente() {
 }
 
 async function eliminarCliente() {
-  if (!confirm(`¿Eliminar a ${clienteEdit.nombre} y sus domicilios? Sus pedidos no se borran.`)) return;
+  if (!await confirmar({icono: '🗑️', titulo: '¿Eliminar cliente?', boton: 'Eliminar', tipo: 'rojo',
+      mensaje: `<b>${esc(clienteEdit.nombre)}</b> y sus ${clienteEdit.domicilios.length} domicilio(s). Sus pedidos no se borran.`})) return;
   const r = await api('eliminar_cliente', {metodo: 'POST', datos: {telefono: clienteAbierto}});
   if (!r.ok) { toast('⚠️ ' + r.error); return; }
   clientes = clientes.filter(c => c.telefono !== clienteAbierto);
@@ -1059,7 +1153,8 @@ async function renderRespaldos() {
 
 async function restaurar(archivo) {
   if (hayCambios()) { toast('Primero guarda o descarta tus cambios'); return; }
-  if (!confirm(`¿Restaurar el menú de ${archivo}? El menú actual se respalda antes.`)) return;
+  if (!await confirmar({icono: '↩️', titulo: '¿Restaurar este menú?', boton: 'Restaurar', tipo: 'naranja',
+      mensaje: `${esc(archivo)}<br><br>Reemplaza el menú que ven los clientes. El menú actual se respalda antes.`})) return;
   const r = await api('restaurar', {metodo: 'POST', datos: {archivo}});
   if (!r.ok) { toast('⚠️ ' + r.error); return; }
   await cargarMenu();

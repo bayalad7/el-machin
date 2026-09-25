@@ -28,7 +28,7 @@ Then open `http://localhost:8000/` (app) and `http://localhost:8000/admin/` (pan
 | `api/comun.php` | Shared helpers: atomic JSON writes, `menu_vigente()`, server-side pricing (`precio_unitario`, mirrors JS `buscarPrecio`), folio counter with `flock`, per-IP rate limit. |
 | `api/menu.php` | `GET` current menu. |
 | `api/pedido.php` | `POST` order → recomputes total, assigns folio `MACH-AAAAMMDD-###`, writes `datos/pedidos/AAAA-MM/FOLIO.json`. |
-| `api/admin.php` | Admin API (PHP session + `X-CSRF` header): login, menu save with validation + auto-backup, orders list/status, backups/restore, client catalog, delivery tariff, per-order delivery (`envio_pedido` sets `envio` + `total_final`). |
+| `api/admin.php` | Admin API (PHP session + `X-CSRF` header): login, menu save with validation + auto-backup, orders list/status (state machine `TRANSICIONES_PEDIDO`: nuevo → confirmado → entregado, nuevo → cancelado; mirrored by `ACCIONES_ESTADO` in the panel; every mutating panel action goes through the `confirmar()` modal), backups/restore, client catalog, delivery tariff, per-order delivery (`envio_pedido` sets `envio` + `total_final`). |
 | `datos/` | Runtime data (live `menu.json`, `respaldos/`, `pedidos/`, `clientes.json`, `envio.json`, `limites/`). Git-ignored except `.htaccess` (denies web access on Apache). |
 
 ### Clients and delivery
