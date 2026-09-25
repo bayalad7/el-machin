@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "productos": [
+    {"nombre": "Ceviche",            "titulo": "Ceviches",             "subtitulo": "Cebolla, jitomate, cilantro",  "icono": "🐟🍋", "color": "#2ebd6b", "flujo": "marisco",   "cobro": "tamano", "sabores": "",          "tostitos": "no", "picor": "opcional",    "mariscos": "general", "ancho": "tercio",   "activo": "si", "orden": 1},
+    {"nombre": "Aguachile Mariposa", "titulo": "Aguachiles",           "subtitulo": "Estilo tradicional mariposa",  "icono": "🦋🦐", "color": "#ff6b2b", "flujo": "marisco",   "cobro": "tamano", "sabores": "aguachile", "tostitos": "no", "picor": "obligatorio", "mariscos": "general", "ancho": "tercio",   "activo": "si", "orden": 2},
+    {"nombre": "Aguachile Botana",   "titulo": "Aguachiles en Botana", "subtitulo": "Picado en cuadritos",          "icono": "🔪🦐", "color": "#e8334a", "flujo": "marisco",   "cobro": "tamano", "sabores": "aguachile", "tostitos": "no", "picor": "obligatorio", "mariscos": "general", "ancho": "tercio",   "activo": "si", "orden": 3},
+    {"nombre": "Tahitiana",          "titulo": "Tahitianas",           "subtitulo": "Con salsas y clamato",         "icono": "🥥🐟", "color": "#f5c518", "flujo": "marisco",   "cobro": "tamano", "sabores": "",          "tostitos": "no", "picor": "opcional",    "mariscos": "general", "ancho": "tercio",   "activo": "si", "orden": 4},
+    {"nombre": "Tostiaguachile",     "titulo": "Tostiaguachiles",      "subtitulo": "Con tostitos al gusto",        "icono": "🍟🌶️", "color": "#9b59b6", "flujo": "marisco",   "cobro": "pieza",  "sabores": "aguachile", "tostitos": "si", "picor": "obligatorio", "mariscos": "general", "ancho": "tercio",   "activo": "si", "orden": 5},
+    {"nombre": "Tacos Empanizados",  "titulo": "Tacos Empanizados",    "subtitulo": "Camarón o pescado crocante",   "icono": "🌮🍤", "color": "#1e8bc3", "flujo": "marisco",   "cobro": "pieza",  "sabores": "",          "tostitos": "no", "picor": "opcional",    "mariscos": "tacos",   "ancho": "tercio",   "activo": "si", "orden": 6},
+    {"nombre": "Micheladas",         "titulo": "Micheladas",           "subtitulo": "Vasos preparados de cerveza · Victoria, Corona, Pacífico", "icono": "🍺", "color": "#f39c12", "flujo": "michelada", "cobro": "pieza", "sabores": "", "tostitos": "no", "picor": "no", "mariscos": "", "ancho": "completo", "activo": "si", "orden": 7}
+  ],
+  "precios": [
+    {"producto": "Ceviche", "sabor": "", "marisco": "Pescado",                 "kg": 690, "lt": 230, "medio": 150, "pieza": ""},
+    {"producto": "Ceviche", "sabor": "", "marisco": "Camarón cocido en limón", "kg": 750, "lt": 250, "medio": 170, "pieza": ""},
+    {"producto": "Ceviche", "sabor": "", "marisco": "Camarón cocido en agua",  "kg": 840, "lt": 280, "medio": 180, "pieza": ""},
+    {"producto": "Ceviche", "sabor": "", "marisco": "Pulpo",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+    {"producto": "Ceviche", "sabor": "", "marisco": "Mixto",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+
+    {"producto": "Aguachile Mariposa", "sabor": "Rojo",  "marisco": "Pescado",                 "kg": 690, "lt": 230, "medio": 160, "pieza": ""},
+    {"producto": "Aguachile Mariposa", "sabor": "Rojo",  "marisco": "Camarón cocido en limón", "kg": 750, "lt": 250, "medio": 170, "pieza": ""},
+    {"producto": "Aguachile Mariposa", "sabor": "Rojo",  "marisco": "Camarón cocido en agua",  "kg": 840, "lt": 280, "medio": 180, "pieza": ""},
+    {"producto": "Aguachile Mariposa", "sabor": "Rojo",  "marisco": "Mixto",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+
+    {"producto": "Aguachile Mariposa", "sabor": "Verde", "marisco": "Pescado",                 "kg": 690, "lt": 230, "medio": 160, "pieza": ""},
+    {"producto": "Aguachile Mariposa", "sabor": "Verde", "marisco": "Camarón cocido en limón", "kg": 750, "lt": 250, "medio": 170, "pieza": ""},
+    {"producto": "Aguachile Mariposa", "sabor": "Verde", "marisco": "Camarón cocido en agua",  "kg": 840, "lt": 280, "medio": 180, "pieza": ""},
+    {"producto": "Aguachile Mariposa", "sabor": "Verde", "marisco": "Mixto",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+
+    {"producto": "Aguachile Mariposa", "sabor": "Negro", "marisco": "Pescado",                 "kg": 690, "lt": 230, "medio": 160, "pieza": ""},
+    {"producto": "Aguachile Mariposa", "sabor": "Negro", "marisco": "Camarón cocido en limón", "kg": 750, "lt": 250, "medio": 170, "pieza": ""},
+    {"producto": "Aguachile Mariposa", "sabor": "Negro", "marisco": "Camarón cocido en agua",  "kg": 840, "lt": 280, "medio": 180, "pieza": ""},
+    {"producto": "Aguachile Mariposa", "sabor": "Negro", "marisco": "Mixto",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+
+    {"producto": "Aguachile Botana", "sabor": "Rojo",  "marisco": "Pescado",                 "kg": 690, "lt": 230, "medio": 160, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Rojo",  "marisco": "Camarón cocido en limón", "kg": 750, "lt": 250, "medio": 170, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Rojo",  "marisco": "Camarón cocido en agua",  "kg": 840, "lt": 280, "medio": 180, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Rojo",  "marisco": "Mixto",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Rojo",  "marisco": "Pulpo",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+    
+    {"producto": "Aguachile Botana", "sabor": "Verde", "marisco": "Pescado",                 "kg": 690, "lt": 230, "medio": 160, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Verde", "marisco": "Camarón cocido en limón", "kg": 750, "lt": 250, "medio": 170, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Verde", "marisco": "Camarón cocido en agua",  "kg": 840, "lt": 280, "medio": 180, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Verde", "marisco": "Mixto",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Verde", "marisco": "Pulpo",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+    
+    {"producto": "Aguachile Botana", "sabor": "Negro", "marisco": "Pescado",                 "kg": 690, "lt": 230, "medio": 160, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Negro", "marisco": "Camarón cocido en limón", "kg": 750, "lt": 250, "medio": 170, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Negro", "marisco": "Camarón cocido en agua",  "kg": 840, "lt": 280, "medio": 180, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Negro", "marisco": "Mixto",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+    {"producto": "Aguachile Botana", "sabor": "Negro", "marisco": "Pulpo",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+
+    {"producto": "Tahitiana", "sabor": "", "marisco": "Pescado",                 "kg": 720, "lt": 240, "medio": 160, "pieza": ""},
+    {"producto": "Tahitiana", "sabor": "", "marisco": "Camarón cocido en limón", "kg": 750, "lt": 250, "medio": 170, "pieza": ""},
+    {"producto": "Tahitiana", "sabor": "", "marisco": "Camarón cocido en agua",  "kg": 840, "lt": 280, "medio": 180, "pieza": ""},
+    {"producto": "Tahitiana", "sabor": "", "marisco": "Pulpo",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+    {"producto": "Tahitiana", "sabor": "", "marisco": "Mixto",                   "kg": 960, "lt": 320, "medio": 200, "pieza": ""},
+
+    {"producto": "Tostiaguachile", "sabor": "", "marisco": "Pescado",                 "kg": "", "lt": "", "medio": "", "pieza": 120},
+    {"producto": "Tostiaguachile", "sabor": "", "marisco": "Camarón cocido en limón", "kg": "", "lt": "", "medio": "", "pieza": 120},
+    {"producto": "Tostiaguachile", "sabor": "", "marisco": "Camarón cocido en agua",  "kg": "", "lt": "", "medio": "", "pieza": 120},
+    {"producto": "Tostiaguachile", "sabor": "", "marisco": "Pulpo",                   "kg": "", "lt": "", "medio": "", "pieza": 150},
+    {"producto": "Tostiaguachile", "sabor": "", "marisco": "Mixto",                   "kg": "", "lt": "", "medio": "", "pieza": 150},
+
+    {"producto": "Tacos Empanizados", "sabor": "", "marisco": "Pescado empanizado", "kg": "", "lt": "", "medio": "", "pieza": 35},
+    {"producto": "Tacos Empanizados", "sabor": "", "marisco": "Camarón empanizado", "kg": "", "lt": "", "medio": "", "pieza": 45},
+    {"producto": "Tacos Empanizados", "sabor": "", "marisco": "Mixto",              "kg": "", "lt": "", "medio": "", "pieza": 45}
+  ],
+  "mariscos": [
+    {"grupo": "general", "clave": "Pescado",                 "icono": "🐟", "etiqueta": "Pescado",                    "solo_combinado": "no", "activo": "si"},
+    {"grupo": "general", "clave": "Camarón cocido en limón", "icono": "🦐", "etiqueta": "Camarón cocido en limón 🍋", "solo_combinado": "no", "activo": "si"},
+    {"grupo": "general", "clave": "Camarón cocido en agua",  "icono": "🦐", "etiqueta": "Camarón cocido en agua 💧",  "solo_combinado": "no", "activo": "si"},
+    {"grupo": "general", "clave": "Pulpo",                   "icono": "🐙", "etiqueta": "Pulpo",                      "solo_combinado": "si", "activo": "si"},
+    {"grupo": "tacos",   "clave": "Pescado empanizado",      "icono": "🐟", "etiqueta": "Pescado empanizado",         "solo_combinado": "no", "activo": "si"},
+    {"grupo": "tacos",   "clave": "Camarón empanizado",      "icono": "🦐", "etiqueta": "Camarón empanizado",         "solo_combinado": "no", "activo": "si"}
+  ],
+  "sabores": [
+    {"grupo": "aguachile", "clave": "rojo",   "emoji": "🔴", "nombre": "Rojo",   "descripcion": "Chiles de árbol, clamato, mango"},
+    {"grupo": "aguachile", "clave": "verde",  "emoji": "🟢", "nombre": "Verde",  "descripcion": "Chile serrano, cilantro, salsas verdes"},
+    {"grupo": "aguachile", "clave": "negro",  "emoji": "⚫", "nombre": "Negro",  "descripcion": "Habanero + serrano, salsas negras"},
+    {"grupo": "tostitos",  "clave": "verde",  "emoji": "💚", "nombre": "Verde",  "descripcion": "Tostitos sabor verde"},
+    {"grupo": "tostitos",  "clave": "morado", "emoji": "💜", "nombre": "Morado", "descripcion": "Tostitos sabor morado"}
+  ],
+  "niveles": [
+    {"clave": "sin", "icono": "🚫",     "etiqueta": "Sin picante"},
+    {"clave": "1",   "icono": "🌶️",     "etiqueta": "Nivel 1"},
+    {"clave": "2",   "icono": "🌶️🌶️",   "etiqueta": "Nivel 2"},
+    {"clave": "3",   "icono": "🌶️🌶️🌶️", "etiqueta": "Nivel 3"}
+  ],
+  "tamanos": [
+    {"clave": "kg",    "etiqueta": "KILO",    "plural": "KILOS",    "icono": "🪣"},
+    {"clave": "lt",    "etiqueta": "LITRO",   "plural": "LITROS",   "icono": "🫙"},
+    {"clave": "medio", "etiqueta": "½ LITRO", "plural": "½ LITROS", "icono": "🫙"}
+  ],
+  "micheladas": [
+    {"opcion": "cerveza",   "clave": "Victoria",                "icono": "🍺",   "descripcion": "",                                    "precio": "",  "requiere_camaron": "no", "activo": "si"},
+    {"opcion": "cerveza",   "clave": "Corona",                  "icono": "🍺",   "descripcion": "",                                    "precio": "",  "requiere_camaron": "no", "activo": "si"},
+    {"opcion": "cerveza",   "clave": "Pacífico",                "icono": "🍺",   "descripcion": "",                                    "precio": "",  "requiere_camaron": "no", "activo": "si"},
+    {"opcion": "preparado", "clave": "Chelada",                 "icono": "",     "descripcion": "Sal y Limón",                         "precio": "",  "requiere_camaron": "no", "activo": "si"},
+    {"opcion": "preparado", "clave": "Cielo Rojo",              "icono": "",     "descripcion": "Sal, Limón y Clamato",                "precio": "",  "requiere_camaron": "no", "activo": "si"},
+    {"opcion": "preparado", "clave": "Salsas Negras",           "icono": "",     "descripcion": "Sal, Limón, Clamato y Salsas Negras", "precio": "",  "requiere_camaron": "no", "activo": "si"},
+    {"opcion": "tipo",      "clave": "Sencilla",                "icono": "🍺",   "descripcion": "",                                    "precio": 75,  "requiere_camaron": "no", "activo": "si"},
+    {"opcion": "tipo",      "clave": "Con Camarón",             "icono": "🦐",   "descripcion": "",                                    "precio": 185, "requiere_camaron": "si", "activo": "si"},
+    {"opcion": "tipo",      "clave": "Con Camarón y Pulpo",     "icono": "🦐🐙", "descripcion": "",                                    "precio": 225, "requiere_camaron": "si", "activo": "si"},
+    {"opcion": "camaron",   "clave": "Camarón cocido en limón", "icono": "🍋",   "descripcion": "",                                    "precio": "",  "requiere_camaron": "no", "activo": "si"},
+    {"opcion": "camaron",   "clave": "Camarón cocido en agua",  "icono": "💧",   "descripcion": "",                                    "precio": "",  "requiere_camaron": "no", "activo": "si"}
+  ],
+  "extras": [
+    {"nombre": "Paquete de tostadas", "icono": "🥙", "precio": 15,  "seccion": "Complementos",     "activo": "si"},
+    {"nombre": "Tostitos",            "icono": "🍟", "precio": 25,  "seccion": "Complementos",     "activo": "si"},
+    {"nombre": "Salsa picosa",        "icono": "🌶️", "precio": 15,  "seccion": "Complementos",     "activo": "si"},
+    {"nombre": "Vaso con hielo",      "icono": "🥛", "precio": 15,  "seccion": "Complementos",     "activo": "si"},
+    {"nombre": "Plato desechable",    "icono": "🍽️", "precio": 2.5, "seccion": "Complementos",     "activo": "si"},
+    {"nombre": "Coca Cola",           "icono": "🥤", "precio": 45,  "seccion": "Refrescos 600ml",  "activo": "si"},
+    {"nombre": "Fanta",               "icono": "🥤", "precio": 45,  "seccion": "Refrescos 600ml",  "activo": "si"},
+    {"nombre": "Sprite",              "icono": "🥤", "precio": 45,  "seccion": "Refrescos 600ml",  "activo": "si"},
+    {"nombre": "Sidral Aga",          "icono": "🥤", "precio": 45,  "seccion": "Refrescos 600ml",  "activo": "si"}
+  ],
+  "operadores": [
+    {"nombre": "Benjamín", "icono": "🧑", "whatsapp": "5213141252324", "activo": "si"},
+    {"nombre": "Cinthia",  "icono": "👩", "whatsapp": "5213141576578", "activo": "si"},
+    {"nombre": "Citlali",  "icono": "👩", "whatsapp": "5213141023251", "activo": "si"},
+    {"nombre": "Víctor",   "icono": "👦", "whatsapp": "5213141650688", "activo": "si"}
+  ],
+  "grupos": [
+    {"clave": "bachillerato", "etiqueta": "🏫 Bachillerato"},
+    {"clave": "primaria",     "etiqueta": "📚 Primaria"},
+    {"clave": "futbol",       "etiqueta": "⚽ Fútbol"},
+    {"clave": "trabajo",      "etiqueta": "💼 Trabajo"},
+    {"clave": "familia",      "etiqueta": "👨‍👩‍👧 Familia"},
+    {"clave": "amigos",       "etiqueta": "🎉 Amigos"},
+    {"clave": "iglesia",      "etiqueta": "⛪ Iglesia"},
+    {"clave": "otro",         "etiqueta": "✏️ Otro..."}
+  ],
+  "config": [
+    {"clave": "dias_entrega",      "valor": "jueves,viernes,sabado",                             "descripcion": "Días en que se entregan pedidos, separados por coma"},
+    {"clave": "horarios",          "valor": "13:00,13:30,14:00,14:30,15:00,15:30,16:00,16:30,17:00", "descripcion": "Horas disponibles (formato 24 h), separadas por coma"},
+    {"clave": "hora_corte",        "valor": "21",                                                "descripcion": "Después de esta hora ya no se puede pedir para el mismo día"},
+    {"clave": "whatsapp_respaldo", "valor": "5213141252324",                                     "descripcion": "Número al que se envía si el operador no tiene WhatsApp"}
+  ]
+}
