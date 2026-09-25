@@ -1030,6 +1030,7 @@ function addToCart() {
     const unitPrice = getUnitPrice();
     cart.push({
       prep: 'Michelada',
+      producto: state.prep,   // nombre del producto en el menú (para recalcular en el servidor)
       type: 'michelada',
       picorDisplay: '', picorMsg: '', saborEnMsg: '',
       mariscos: [], size: 'pieza',
@@ -1085,6 +1086,7 @@ function addToCart() {
     picorMsg,
     saborEnMsg,
     mariscos: [...state.mariscos],
+    sabor: state.sabor, tostosSabor: state.tostosSabor, nivel: state.nivel,
     size: state.size,
     sizeLabel: f.porPieza ? 'Pieza' : getSizeLabel(state.size, state.qty),
     qty: state.qty,
@@ -1394,6 +1396,14 @@ function updateCoords(lat, lng) {
   gpsCoords = {lat, lng};
 }
 
+// Descripción de una línea del carrito (resumen y registro del pedido)
+function descripcionItem(item) {
+  const qtyStr = item.qty > 1 ? ` ×${item.qty}` : '';
+  return item.type === 'michelada'
+    ? `Michelada ${item.micheladaCerveza} — ${item.micheladaPreparado} — ${item.sizeLabel}${item.micheladaCamaron ? ' ('+item.micheladaCamaron+')' : ''}${qtyStr}`
+    : `${item.prep}${item.mariscos.length ? ' — ' + item.mariscos.join('+') : ''} (${item.sizeLabel}${qtyStr})${item.picorDisplay ? ' | '+item.picorDisplay : ''}`;
+}
+
 function renderSummary() {
   const cartTotal  = cart.reduce((s,i)=>s+i.price, 0);
   const extTotal   = getExtrasTotal();
@@ -1424,12 +1434,8 @@ function renderSummary() {
   document.getElementById('orderSummary').innerHTML = `
     <h3>🧾 Resumen del pedido</h3>
     ${cart.map(item => {
-      const qtyStr = item.qty > 1 ? ` ×${item.qty}` : '';
-      const desc = item.type === 'michelada'
-        ? `Michelada ${item.micheladaCerveza} — ${item.micheladaPreparado} — ${item.sizeLabel}${item.micheladaCamaron ? ' ('+item.micheladaCamaron+')' : ''}${qtyStr}`
-        : `${item.prep}${item.mariscos.length ? ' — ' + item.mariscos.join('+') : ''} (${item.sizeLabel}${qtyStr})${item.picorDisplay ? ' | '+item.picorDisplay : ''}`;
       return `<div class="summary-item">
-        <span>${desc}</span>
+        <span>${descripcionItem(item)}</span>
         <strong>$${item.price.toFixed(2)}</strong>
       </div>`;
     }).join('')}
@@ -1454,7 +1460,72 @@ function goTo(n) {
   window.scrollTo(0,0);
 }
 
-function sendWhatsApp() {
+// ── REGISTRO DE PEDIDOS ───────────────────────────────────────────────
+// Cada pedido se guarda en el servidor (api/pedido.php) antes de abrir WhatsApp.
+// Si falla, queda en cola en este navegador y se reintenta al volver a abrir la app.
+// Nunca bloquea el envío por WhatsApp.
+const API_PEDIDO = 'api/pedido.php';
+const COLA_KEY = 'machin_pedidos_pendientes';
+
+function leerCola() {
+  try { return JSON.parse(localStorage.getItem(COLA_KEY)) || []; } catch { return []; }
+}
+function guardarCola(cola) {
+  try { localStorage.setItem(COLA_KEY, JSON.stringify(cola)); } catch {}
+}
+
+// Devuelve {folio} si se guardó, {rechazado:true} si el servidor lo rechazó por datos inválidos, o null si no hubo conexión
+async function enviarPedido(payload, timeoutMs = 4000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch(API_PEDIDO, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload), signal:ctrl.signal});
+    const data = await r.json().catch(() => null);
+    if (r.ok && data?.ok) return {folio: data.folio};
+    if (r.status === 400 || r.status === 413) return {rechazado: true};
+    return null;
+  } catch { return null; } finally { clearTimeout(timer); }
+}
+
+async function registrarPedido(payload) {
+  const res = await enviarPedido(payload);
+  if (!res) guardarCola([...leerCola(), payload]);
+  return res?.folio || null;
+}
+
+async function reintentarPendientes() {
+  const cola = leerCola();
+  if (!cola.length) return;
+  const restantes = [];
+  for (const p of cola) {
+    const res = await enviarPedido(p);
+    if (!res) restantes.push(p);
+  }
+  guardarCola(restantes);
+}
+
+function armarPayload(extra) {
+  return {
+    idLocal: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    operador: selectedOperador,
+    grupo: selectedGrupo || '',
+    fecha: selectedFecha?.iso || '',
+    fechaTexto: selectedFecha?.label || '',
+    entrega,
+    gps: entrega === 'domicilio' ? gpsCoords : null,
+    total: getGrandTotal(),
+    items: cart.map(i => ({
+      prep: i.producto || i.prep, descripcion: descripcionItem(i), qty: i.qty, price: i.price, notes: i.notes,
+      mariscos: i.mariscos, size: i.size, sabor: i.sabor, tostosSabor: i.tostosSabor, nivel: i.nivel,
+      micheladaCerveza: i.micheladaCerveza, micheladaPreparado: i.micheladaPreparado,
+      micheladaTipo: i.micheladaTipo, micheladaCamaron: i.micheladaCamaron,
+    })),
+    extras: Object.fromEntries(Object.entries(extrasQty).filter(([,q]) => q > 0)),
+    ...extra,
+  };
+}
+
+async function sendWhatsApp() {
   const nombre   = document.getElementById('nombreInput').value.trim();
   const telefono = document.getElementById('telefonoInput').value.trim();
   const horaVal    = document.getElementById('horaInput').value;
@@ -1471,9 +1542,24 @@ function sendWhatsApp() {
   if (entrega === 'domicilio' && !dir) { alert('Por favor ingresa tu dirección'); return; }
 
   const horaTipo = entrega === 'domicilio' ? 'entrega' : 'recolección';
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  // En escritorio la pestaña se abre ya (dentro del clic) para que el navegador no la bloquee
+  // mientras se espera la respuesta del servidor.
+  const win = isMobile ? null : window.open('about:blank', '_blank');
+  const btn = document.getElementById('btnWhatsapp');
+  btn.disabled = true;
+  const btnHtml = btn.innerHTML;
+  btn.innerHTML = '⏳ Registrando pedido...';
+
+  const folio = await registrarPedido(armarPayload({nombre, telefono, hora: horaVal, direccion: dir, referencia: ref}));
+
+  btn.innerHTML = btnHtml;
+  btn.disabled = false;
 
   const grandTotal = getGrandTotal();
   let msg = `🦐 *NUEVO PEDIDO — El Machín Mariscos*\n`;
+  if (folio) msg += `🧾 *Folio:* ${folio}\n`;
   msg += `🧑‍💼 *Enviado a:* ${selectedOperador}\n`;
   msg += `👤 *Cliente:* ${nombre} | 📱 ${telefono}\n`;
   if (selectedGrupo) msg += `🏷️ *Grupo:* ${selectedGrupo}\n`;
@@ -1520,7 +1606,6 @@ function sendWhatsApp() {
   }
 
   const phone = OPERADORES[selectedOperador] || CONFIG.whatsapp_respaldo || '5213141252324';
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   // Encode preserving emojis correctly for WhatsApp Web (desktop)
   function encodeForWA(text) {
@@ -1540,12 +1625,8 @@ function sendWhatsApp() {
     ? `https://wa.me/${phone}?text=${encoded}`
     : `https://web.whatsapp.com/send?phone=${phone}&text=${encoded}`;
 
-  if (isMobile) {
-    window.location.href = url;
-  } else {
-    const win = window.open(url, '_blank');
-    if (!win) window.location.href = url;
-  }
+  if (win) win.location.href = url;
+  else window.location.href = url;
 }
 
 // Arranque: cargar el menú y pintar la pantalla 1
@@ -1557,6 +1638,7 @@ function sendWhatsApp() {
     return;
   }
   aplicarMenu(menu);
+  reintentarPendientes();
 })();
 
 
