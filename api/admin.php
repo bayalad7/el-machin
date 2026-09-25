@@ -237,6 +237,25 @@ case 'POST estado_pedido':
     escribir_json($ruta, $p);
     responder(['ok' => true]);
 
+// Elimina un pedido moviéndolo a datos/papelera/ (se puede recuperar desde el servidor)
+case 'POST eliminar_pedido':
+    exigir_sesion(); exigir_csrf();
+    $folio = (string) (leer_cuerpo_json(4096)['folio'] ?? '');
+    $ruta = ruta_pedido($folio);
+    $p = $ruta ? leer_json($ruta) : null;
+    if (!$p) error_api('Pedido no encontrado', 404);
+    $p['eliminado'] = date('c');
+    escribir_json(DATA_DIR . '/papelera/' . $folio . '.json', $p);
+    if (!@unlink($ruta)) error_api('No se pudo eliminar el pedido. Revisa permisos del servidor.', 500);
+    // Descontarlo del contador del cliente (si falla, el pedido ya quedó eliminado)
+    $tel = normalizar_telefono((string) ($p['cliente']['telefono'] ?? ''));
+    try {
+        con_clientes(function (&$clientes) use ($tel) {
+            if (isset($clientes[$tel])) $clientes[$tel]['total_pedidos'] = max(0, ($clientes[$tel]['total_pedidos'] ?? 0) - 1);
+        });
+    } catch (RuntimeException $e) {}
+    responder(['ok' => true]);
+
 // ── Clientes ──
 case 'GET clientes':
     exigir_sesion();

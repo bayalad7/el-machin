@@ -602,6 +602,7 @@ function htmlPedido(p) {
           ${['nuevo', 'confirmado', 'entregado', 'cancelado'].map(e => `<option ${e === p.estado ? 'selected' : ''}>${e}</option>`).join('')}
         </select>
         <a class="btn btn-claro btn-mini" href="https://wa.me/52${telDigits(p.cliente.telefono)}" target="_blank">💬 WhatsApp cliente</a>
+        <button class="btn btn-peligro btn-mini" onclick="eliminarPedido('${esc(p.folio)}')">🗑️ Eliminar pedido</button>
       </div>
     </div>
   </div>`;
@@ -615,6 +616,17 @@ async function cambiarEstado(folio, estado) {
   const el = document.getElementById('p-' + folio);
   if (el) el.className = `pedido ${estado} abierto`;
   toast(`Pedido ${folio}: ${estado}`);
+}
+
+async function eliminarPedido(folio) {
+  const p = pedidos.find(x => x.folio === folio);
+  if (!confirm(`¿Eliminar el pedido ${folio} de ${p?.cliente.nombre ?? ''}?\n\nDejará de aparecer en el panel y en los totales. Se guarda una copia en la papelera del servidor.`)) return;
+  const r = await api('eliminar_pedido', {metodo: 'POST', datos: {folio}});
+  if (!r.ok) { toast('⚠️ ' + r.error); return; }
+  pedidos = pedidos.filter(x => x.folio !== folio);
+  delete envioEdit[folio];
+  pintarPedidos();
+  toast(`🗑️ Pedido ${folio} eliminado`);
 }
 
 function exportarCSV() {

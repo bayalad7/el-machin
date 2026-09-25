@@ -116,6 +116,7 @@ Pon `activo` = **no** (productos, mariscos, extras, operadores, opciones de mich
 - Cambia el **estado** (nuevo → confirmado → entregado, o cancelado) para llevar el control.
 - **⚠️ revisar** indica que el total que vio el cliente no coincide con los precios actuales (por ejemplo, si cambiaste un precio mientras armaba su pedido).
 - **⬇️ CSV** descarga los pedidos filtrados para abrirlos en Excel.
+- **🗑️ Eliminar pedido** (dentro del detalle) sirve para quitar pedidos de prueba o duplicados. Deja de aparecer en el panel y en los totales; se guarda una copia en `datos/papelera/` en el servidor por si hay que recuperarlo (basta con regresar el archivo a `datos/pedidos/AAAA-MM/`). Si el cliente también era de prueba, elimínalo en **👥 Clientes**. Para un pedido real que no se entregó, mejor usa el estado *cancelado*.
 - Cada pedido también es un archivo en `datos/pedidos/AAAA-MM/FOLIO.json` en el servidor. El folio (ej. `MACH-20261001-003`) aparece en el mensaje de WhatsApp.
 - Si el cliente no tenía conexión con el servidor al enviar, el WhatsApp sale sin folio y el pedido se registra automáticamente la próxima vez que abra la app.
 
@@ -161,6 +162,6 @@ Pon `activo` = **no** (productos, mariscos, extras, operadores, opciones de mich
 | `api/admin.php` | API del panel (sesión + token CSRF): login, menú, pedidos, estados, respaldos. |
 | `api/crear-password.php` | Crea/cambia la contraseña (solo por consola). |
 | `api/config.local.php` | Hash de la contraseña y ajustes locales. **No se sube a git.** |
-| `datos/` | Menú editado (`menu.json`), respaldos (`respaldos/`), pedidos (`pedidos/AAAA-MM/`), catálogo de clientes (`clientes.json`) y tarifario de envío (`envio.json`). **No se sube a git.** |
+| `datos/` | Menú editado (`menu.json`), respaldos (`respaldos/`), pedidos (`pedidos/AAAA-MM/`), catálogo de clientes (`clientes.json`), tarifario de envío (`envio.json`) y pedidos eliminados (`papelera/`). **No se sube a git.** |
 
 Para probar en local (requiere PHP): `php -S localhost:8000` en la carpeta de la app y abrir `http://localhost:8000/`. La app ya no funciona abriendo `index.html` con doble clic, porque el navegador no permite leer el menú desde un archivo local.
