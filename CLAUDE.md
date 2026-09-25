@@ -34,7 +34,7 @@ Then open `http://localhost:8000/` (app) and `http://localhost:8000/admin/` (pan
 ### Clients and delivery
 
 - `api/pedido.php` upserts the client in `datos/clientes.json` (key = last 10 phone digits) via `registrar_cliente_de_pedido()`; a new address becomes another `domicilios[]` entry unless the normalized text matches or GPS is < 60 m from a saved one. Client registration failures never block saving the order (`con_clientes()` throws instead of calling `error_api()`).
-- Delivery tariff (`envio_config()`): base price up to `base_km` + `precio_km_extra` per started extra km, separate `normal`/`lluvia` tables. JS `tarifaEnvio()` in `admin/index.html` mirrors PHP `calcular_tarifa()`. Km estimate = haversine from `restaurante` × `factor_calles`.
+- Delivery tariff (`envio_config()`): distance table per `normal`/`lluvia` (`rangos: [{hasta_km, precio}]` + `km_extra_despues` beyond the last row; defaults = Tiger Delivery tables in `TARIFARIO_DEFECTO`). Billed km = `km_cobrados()` (≥ .5 rounds up); price = first row with `hasta_km` ≥ billed km. An old base/per-km `envio.json` falls back to the defaults. JS `tarifaEnvio()` in `admin/index.html` mirrors PHP `calcular_tarifa()`. Km estimate = haversine from `restaurante` × `factor_calles`.
 - Courier message follows the provider's template (`mensajeRepartidor()`); cash: courier pays food and collects food + delivery; transfer: client pays us food + delivery, we pay the courier, so courier pays 0 and collects 0. Customer picks `formaPago` in the app (stored as `forma_pago`).
 - The customer app only remembers recent clients/addresses in `localStorage` (`machin_clientes_recientes`); the server catalog is never exposed publicly.
 

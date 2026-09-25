@@ -276,22 +276,50 @@ function registrar_cliente_de_pedido(array $pedido): ?array {
 }
 
 // ── Tarifario de envío ──────────────────────────────────────────────────
-// Base + costo por km extra, con un tarifario normal y otro para lluvia.
-function envio_config(): array {
-    $def = [
-        'restaurante'   => ['lat' => 19.1273254, 'lng' => -104.34609, 'mapa' => 'https://maps.app.goo.gl/wmoyhHNFUDe9B2gV8'],
-        'factor_calles' => 1.3,
-        'lluvia_activa' => false,
-        'normal'        => ['base_km' => 5, 'base_precio' => 40, 'precio_km_extra' => 0],
-        'lluvia'        => ['base_km' => 5, 'base_precio' => 40, 'precio_km_extra' => 0],
-    ];
-    $cfg = leer_json(ENVIO_FILE) ?? [];
-    return array_replace_recursive($def, $cfg);
+// Tabla por distancia (tarifario del proveedor), una normal y otra para lluvia.
+// Cada renglón: hasta cuántos km aplica y su precio. Después del último renglón se suma
+// km_extra_despues por cada km adicional.
+const TARIFARIO_DEFECTO = [
+    'normal' => ['rangos' => [[5, 40], [6, 50], [7, 60], [8, 70], [9, 80], [10, 90], [11, 105], [12, 115],
+                              [13, 125], [14, 135], [15, 145], [16, 155]], 'km_extra_despues' => 10],
+    'lluvia' => ['rangos' => [[2, 50], [5, 55], [6, 65], [7, 80], [8, 95], [9, 110], [10, 125], [11, 145],
+                              [12, 160], [13, 175], [14, 190], [15, 205], [16, 220]], 'km_extra_despues' => 15],
+];
+
+function tarifario_defecto(string $tipo): array {
+    $t = TARIFARIO_DEFECTO[$tipo];
+    return ['rangos' => array_map(fn($r) => ['hasta_km' => $r[0], 'precio' => $r[1]], $t['rangos']),
+            'km_extra_despues' => $t['km_extra_despues']];
 }
 
-// Precio del envío: base hasta base_km; después, precio_km_extra por cada km adicional (o fracción)
+function envio_config(): array {
+    $cfg = leer_json(ENVIO_FILE) ?? [];
+    $tabla = fn($tipo) => isset($cfg[$tipo]['rangos']) && is_array($cfg[$tipo]['rangos']) && $cfg[$tipo]['rangos']
+        ? ['rangos' => $cfg[$tipo]['rangos'], 'km_extra_despues' => (float) ($cfg[$tipo]['km_extra_despues'] ?? 0)]
+        : tarifario_defecto($tipo);   // también reemplaza el formato anterior (base + km extra)
+    return [
+        'restaurante'   => $cfg['restaurante'] ?? ['lat' => 19.1273254, 'lng' => -104.34609, 'mapa' => 'https://maps.app.goo.gl/wmoyhHNFUDe9B2gV8'],
+        'factor_calles' => (float) ($cfg['factor_calles'] ?? 1.3),
+        'lluvia_activa' => !empty($cfg['lluvia_activa']),
+        'normal'        => $tabla('normal'),
+        'lluvia'        => $tabla('lluvia'),
+    ];
+}
+
+// "A partir de medio kilómetro se cobra la distancia siguiente": 5.4 km → 5 km, 5.5 km → 6 km
+function km_cobrados(float $km): int {
+    return (int) floor(round($km, 2) + 0.5);
+}
+
+// Mismo cálculo que tarifaEnvio() en admin/index.html
 function calcular_tarifa(array $cfg, float $km, bool $lluvia): float {
     $t = $cfg[$lluvia ? 'lluvia' : 'normal'];
-    $extra = max(0, ceil(round($km - (float) $t['base_km'], 2)));
-    return (float) $t['base_precio'] + $extra * (float) $t['precio_km_extra'];
+    $rangos = $t['rangos'];
+    usort($rangos, fn($a, $b) => $a['hasta_km'] <=> $b['hasta_km']);
+    $k = km_cobrados($km);
+    foreach ($rangos as $r) {
+        if ($k <= $r['hasta_km']) return (float) $r['precio'];
+    }
+    $ultimo = end($rangos);
+    return (float) $ultimo['precio'] + ($k - $ultimo['hasta_km']) * (float) $t['km_extra_despues'];
 }

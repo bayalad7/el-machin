@@ -647,8 +647,8 @@ function exportarCSV() {
 }
 
 // ── Envío de pedidos a domicilio ─────────────────────────────────────
-// Tarifario: base hasta base_km y precio_km_extra por cada km adicional (o fracción).
-// Mismo cálculo que calcular_tarifa() en api/comun.php.
+// Tarifario por distancia (normal y lluvia): primer renglón cuyo hasta_km alcance los km cobrados;
+// después del último, km_extra_despues por km. Mismo cálculo que calcular_tarifa() en api/comun.php.
 let envioCfg = null;
 let envioEdit = {};          // folio -> formulario de envío en edición
 const clientesCache = {};    // teléfono (10 dígitos) -> cliente del catálogo
@@ -676,10 +676,22 @@ function kmEstimado(gps) {
   return Math.round(km * 10) / 10;
 }
 
+// "A partir de medio kilómetro se cobra la distancia siguiente": 5.4 → 5 km, 5.5 → 6 km
+const kmCobrados = km => Math.floor(Math.round(Number(km) * 100) / 100 + 0.5);
+
 function tarifaEnvio(km, lluvia, cfg = envioCfg) {
   const t = cfg[lluvia ? 'lluvia' : 'normal'];
-  const extra = Math.max(0, Math.ceil(Math.round((Number(km) - Number(t.base_km)) * 100) / 100));
-  return Number(t.base_precio) + extra * Number(t.precio_km_extra);
+  const rangos = [...t.rangos].sort((a, b) => a.hasta_km - b.hasta_km);
+  const k = kmCobrados(km);
+  const r = rangos.find(x => k <= Number(x.hasta_km));
+  if (r) return Number(r.precio);
+  const ultimo = rangos[rangos.length - 1];
+  return Number(ultimo.precio) + (k - Number(ultimo.hasta_km)) * Number(t.km_extra_despues);
+}
+
+function fueraDeTarifario(km, lluvia) {
+  const rangos = envioCfg[lluvia ? 'lluvia' : 'normal'].rangos;
+  return kmCobrados(km) > Math.max(...rangos.map(r => Number(r.hasta_km)));
 }
 
 // Efectivo: el repartidor adelanta la comida y le cobra al cliente comida + envío.
@@ -763,7 +775,7 @@ function pintarEnvio(folio) {
   const f = esc(folio);
   const on = (campo, modo) => `data-folio="${f}" data-campo="${campo}" onchange="editarEnvio(this,'${modo}')"`;
   const num = (campo, modo, paso = '0.5') => `<input class="input" type="number" step="${paso}" min="0" value="${e[campo]}" ${on(campo, modo)}>`;
-  const sinKmExtra = !Number(envioCfg[e.lluvia ? 'lluvia' : 'normal'].precio_km_extra);
+  const fuera = fueraDeTarifario(e.km, e.lluvia);
   box.innerHTML = `<h4>🛵 Envío ${e._sucio ? '<span class="chip" style="color:var(--naranja-dark)">sin guardar</span>' : '<span class="chip">✅ guardado</span>'}</h4>
     <div class="form-grid">
       <div class="campo" style="grid-column:1/-1"><label>Domicilio del cliente</label>
@@ -786,7 +798,7 @@ function pintarEnvio(folio) {
     </div>
     <div class="form-grid">
       <div class="campo"><label>🛵 Costo de envío</label>${num('tarifa', 'montos')}
-        <small>Tarifario: ${dinero(tarifaEnvio(e.km, e.lluvia))}${sinKmExtra ? ' · ⚠️ configura el costo por km extra en 🛵 Envíos' : ''}</small></div>
+        <small>Tarifario ${e.lluvia ? 'lluvia' : 'normal'}: ${dinero(tarifaEnvio(e.km, e.lluvia))} (se cobran ${kmCobrados(e.km)} km)${fuera ? ' · ⚠️ fuera del tarifario del proveedor: confirma el precio' : ''}</small></div>
       <div class="campo"><label>💸 Repartidor paga</label>${num('repartidor_paga', 'nada')}</div>
       <div class="campo"><label>💵 Cliente paga</label>${num('cliente_paga', 'nada')}</div>
       <div class="campo"><label>💰 Ganancia envío</label>${num('ganancia', 'nada')}</div>
@@ -854,22 +866,36 @@ async function renderEnvios() {
 
 function pintarEnvios() {
   const c = cfgEdit;
-  const campoT = (t, k, label, paso = '1') => `<div class="campo"><label>${label}</label>
-    <input class="input" type="number" min="0" step="${paso}" value="${c[t][k]}" onchange="cfgEdit.${t}.${k}=Number(this.value)||0;pintarEnvios()"></div>`;
-  const ejemplo = [3, 5, 6, 8, 10, 12];
+  // Tabla editable de un tarifario: un renglón por distancia ("hasta X km" → precio)
+  const tabla = (t, titulo) => `<div class="panel" style="flex:1;min-width:260px;margin-bottom:0">
+      <div class="sub-title">${titulo}</div>
+      <div class="tabla-wrap" style="max-height:none"><table class="tabla">
+        <thead><tr><th>Hasta (km)</th><th>Precio ($)</th><th></th></tr></thead>
+        <tbody>${c[t].rangos.map((r, i) => `<tr>
+          <td><input type="number" min="0.5" step="0.5" value="${r.hasta_km}" onchange="cfgEdit.${t}.rangos[${i}].hasta_km=Number(this.value)||0;pintarPruebaTarifa()"></td>
+          <td><input type="number" min="0" step="5" value="${r.precio}" onchange="cfgEdit.${t}.rangos[${i}].precio=Number(this.value)||0;pintarPruebaTarifa()"></td>
+          <td><button class="btn btn-peligro btn-mini" title="Quitar" onclick="cfgEdit.${t}.rangos.splice(${i},1);pintarEnvios()">🗑️</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+      <div class="barra" style="margin:10px 0 0">
+        <button class="btn btn-borde btn-mini" onclick="agregarRango('${t}')">➕ Agregar distancia</button>
+      </div>
+      <div class="campo" style="margin-top:10px"><label>Después del último renglón, por cada km ($)</label>
+        <input class="input" type="number" min="0" step="5" value="${c[t].km_extra_despues}" onchange="cfgEdit.${t}.km_extra_despues=Number(this.value)||0;pintarPruebaTarifa()">
+        <small>Para envíos más lejos que la tabla del proveedor.</small></div>
+    </div>`;
   document.getElementById('contenido').innerHTML = `
     <div class="sec-title">🛵 Envíos a domicilio</div>
-    <p class="sec-desc">Tarifario del repartidor: precio base hasta cierta distancia y un costo por cada km adicional (se cobra el km completo aunque sea fracción). Hay un tarifario normal y otro para lluvia.</p>
+    <p class="sec-desc">Tarifario del repartidor por distancia. Cada renglón dice hasta cuántos km aplica ese precio (ej. <i>hasta 5 km → $40</i>, <i>hasta 6 km → $50</i>). <b>A partir de medio kilómetro se cobra la distancia siguiente:</b> 5.4 km se cobra como 5 km y 5.5 km como 6 km.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+      ${tabla('normal', '🌤️ Tarifa normal')}
+      ${tabla('lluvia', '☔ Tarifa con lluvia')}
+    </div>
     <section class="panel">
-      <div class="sub-title">🌤️ Tarifa normal</div>
-      <div class="form-grid">${campoT('normal', 'base_km', 'Km incluidos en la base', '0.5')}${campoT('normal', 'base_precio', 'Precio base ($)', '0.5')}${campoT('normal', 'precio_km_extra', 'Costo por km extra ($)', '0.5')}</div>
-      <div class="sub-title">☔ Tarifa con lluvia</div>
-      <div class="form-grid">${campoT('lluvia', 'base_km', 'Km incluidos en la base', '0.5')}${campoT('lluvia', 'base_precio', 'Precio base ($)', '0.5')}${campoT('lluvia', 'precio_km_extra', 'Costo por km extra ($)', '0.5')}</div>
-      <label class="check" style="margin:6px 0 12px"><input type="checkbox" ${c.lluvia_activa ? 'checked' : ''} onchange="cfgEdit.lluvia_activa=this.checked"> ☔ Está lloviendo (proponer tarifa de lluvia en los envíos nuevos)</label>
-      <div class="tabla-wrap" style="max-height:none"><table class="tabla"><thead><tr><th>Distancia</th>${ejemplo.map(k => `<th>${k} km</th>`).join('')}</tr></thead><tbody>
-        <tr><td><b>Normal</b></td>${ejemplo.map(k => `<td>${dinero(tarifaEnvio(k, false, c))}</td>`).join('')}</tr>
-        <tr><td><b>Lluvia</b></td>${ejemplo.map(k => `<td>${dinero(tarifaEnvio(k, true, c))}</td>`).join('')}</tr>
-      </tbody></table></div>
+      <label class="check" style="margin-bottom:12px"><input type="checkbox" ${c.lluvia_activa ? 'checked' : ''} onchange="cfgEdit.lluvia_activa=this.checked"> ☔ Está lloviendo (proponer tarifa de lluvia en los envíos nuevos)</label>
+      <div class="campo" style="max-width:240px"><label>🧮 Probar una distancia (km)</label>
+        <input class="input" type="number" min="0" step="0.1" value="${esc(kmPrueba)}" oninput="kmPrueba=this.value;pintarPruebaTarifa()"></div>
+      <p id="pruebaTarifa" class="sec-desc" style="margin:8px 0 0"></p>
     </section>
     <section class="panel">
       <div class="sub-title">📍 Ubicación del restaurante</div>
@@ -885,6 +911,24 @@ function pintarEnvios() {
       </div>
     </section>
     <button class="btn btn-primario" onclick="guardarTarifario()">💾 Guardar tarifario</button>`;
+  pintarPruebaTarifa();
+}
+
+let kmPrueba = '5.5';
+
+function pintarPruebaTarifa() {
+  const el = document.getElementById('pruebaTarifa');
+  if (!el) return;
+  const km = Number(kmPrueba);
+  if (!(km > 0) || !cfgEdit.normal.rangos.length || !cfgEdit.lluvia.rangos.length) { el.textContent = ''; return; }
+  el.innerHTML = `${km} km se cobra como <b>${kmCobrados(km)} km</b>: normal <b>${dinero(tarifaEnvio(km, false, cfgEdit))}</b> · lluvia <b>${dinero(tarifaEnvio(km, true, cfgEdit))}</b>`;
+}
+
+function agregarRango(t) {
+  const rangos = cfgEdit[t].rangos;
+  const ultimo = rangos[rangos.length - 1];
+  rangos.push({hasta_km: ultimo ? Number(ultimo.hasta_km) + 1 : 5, precio: ultimo ? Number(ultimo.precio) : 0});
+  pintarEnvios();
 }
 
 async function guardarTarifario() {

@@ -122,7 +122,10 @@ Pon `activo` = **no** (productos, mariscos, extras, operadores, opciones de mich
 
 ### Envíos a domicilio
 **Configurar el tarifario (una vez, y cuando el proveedor cambie precios):** pestaña **🛵 Envíos**.
-- *Tarifa normal* y *Tarifa con lluvia*: km incluidos en la base, precio base y costo por km extra. Cada km adicional se cobra completo aunque sea fracción (5.2 km = 1 km extra). La tabla de abajo muestra cuánto sale a 3, 5, 6, 8, 10 y 12 km para revisar que esté bien.
+- *Tarifa normal* y *Tarifa con lluvia*: una tabla por distancia, igual a la del proveedor. Cada renglón dice **hasta cuántos km** aplica ese precio (ej. *hasta 5 km → $40*, *hasta 6 km → $50*). Si el proveedor cambia precios, edita los números; con **➕ Agregar distancia** y 🗑️ agregas o quitas renglones. Vienen cargadas las tablas Tiger Delivery (normal 2026 y lluvia).
+- **A partir de medio kilómetro se cobra la distancia siguiente:** 5.4 km se cobra como 5 km y 5.5 km como 6 km.
+- *Después del último renglón, por cada km*: para envíos más lejos que la tabla (más de 16 km). En esos casos el pedido muestra *⚠️ fuera del tarifario* para que confirmes el precio con el repartidor.
+- *🧮 Probar una distancia*: escribe unos km y ves cuánto sale con tarifa normal y con lluvia.
 - *Ubicación del restaurante*: el enlace de Google Maps (es la primera línea del mensaje al repartidor) y las coordenadas, que se usan para estimar los km.
 - *Factor de calles*: la distancia en línea recta se multiplica por este número (1.3 por defecto) para aproximar el recorrido real.
 

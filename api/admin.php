@@ -298,17 +298,28 @@ case 'GET envio':
 
 case 'POST guardar_envio':
     exigir_sesion(); exigir_csrf();
-    $c = leer_cuerpo_json(8192)['config'] ?? [];
-    $tarifa = fn($t) => ['base_km' => numero($t['base_km'] ?? 0, 0, 500), 'base_precio' => numero($t['base_precio'] ?? 0),
-                         'precio_km_extra' => numero($t['precio_km_extra'] ?? 0)];
+    $c = leer_cuerpo_json(16384)['config'] ?? [];
+    // Tabla por distancia: renglones con km > 0, sin distancias repetidas, ordenados
+    $tarifa = function ($t, string $nombre) {
+        $rangos = [];
+        foreach ((array) ($t['rangos'] ?? []) as $r) {
+            if (!is_array($r) || !is_numeric($r['hasta_km'] ?? null) || (float) $r['hasta_km'] <= 0) continue;
+            $km = round((float) $r['hasta_km'], 1);
+            $rangos[(string) $km] = ['hasta_km' => $km, 'precio' => numero($r['precio'] ?? 0)];
+        }
+        if (!$rangos) error_api("La tarifa $nombre necesita al menos un renglón con distancia y precio");
+        if (count($rangos) > 60) error_api("La tarifa $nombre tiene demasiados renglones");
+        ksort($rangos, SORT_NUMERIC);
+        return ['rangos' => array_values($rangos), 'km_extra_despues' => numero($t['km_extra_despues'] ?? 0)];
+    };
     $rest = gps_valido($c['restaurante'] ?? null);
     if (!$rest) error_api('Coordenadas del restaurante inválidas');
     $cfg = [
         'restaurante'   => $rest + ['mapa' => texto($c['restaurante'], 'mapa', 300)],
         'factor_calles' => numero($c['factor_calles'] ?? 1.3, 1, 3),
         'lluvia_activa' => !empty($c['lluvia_activa']),
-        'normal'        => $tarifa($c['normal'] ?? []),
-        'lluvia'        => $tarifa($c['lluvia'] ?? []),
+        'normal'        => $tarifa($c['normal'] ?? [], 'normal'),
+        'lluvia'        => $tarifa($c['lluvia'] ?? [], 'con lluvia'),
     ];
     escribir_json(ENVIO_FILE, $cfg);
     responder(['ok' => true, 'config' => $cfg]);
