@@ -117,22 +117,22 @@
   .opt-card[data-prep="Tahitiana"]         { --card-accent: #f5c518; }
   .opt-card[data-prep="Tostiaguachile"]    { --card-accent: #9b59b6; }
   .opt-card[data-prep="Tacos Empanizados"] { --card-accent: #1e8bc3; }
-  .opt-card[data-prep="Michelas"]          { --card-accent: #f39c12; }
+  .opt-card[data-prep="Micheladas"]          { --card-accent: #f39c12; }
 
   .marisco-row { display:flex; align-items:center; justify-content:space-between; background:#fff; border:2.5px solid var(--gris); border-radius:14px; padding:12px 14px; margin-bottom:10px; cursor:pointer; transition:all .18s; box-shadow:var(--sombra); }
   .marisco-row.selected { border-color:var(--verde); background:#f0fdf4; }
-  .michela-opt-row { position:relative; overflow:hidden; border:2.5px solid transparent; border-radius:18px; padding:0; background:#fff; cursor:pointer; transition:transform .18s, box-shadow .18s, border-color .18s; text-align:center; box-shadow:0 3px 14px rgba(61,32,16,.10); }
-  .michela-opt-row::before { content:''; display:block; height:6px; background:#f39c12; border-radius:16px 16px 0 0; transition:height .18s; }
-  .michela-opt-row:active { transform:scale(.96); }
-  .michela-opt-row.selected { border-color:#f39c12; box-shadow:0 0 0 3px rgba(243,156,18,.22), 0 6px 20px rgba(61,32,16,.13); transform:translateY(-2px); }
-  .michela-opt-row.selected::before { height:8px; }
-  .michela-opt-inner { padding:10px 8px 12px; }
-  .michela-opt-row .m-icon { font-size:1.8rem; margin-bottom:4px; display:block; line-height:1; }
-  .michela-opt-row .m-name { font-weight:900; font-size:.82rem; color:var(--cafe); line-height:1.2; }
+  .michelada-opt-row { position:relative; overflow:hidden; border:2.5px solid transparent; border-radius:18px; padding:0; background:#fff; cursor:pointer; transition:transform .18s, box-shadow .18s, border-color .18s; text-align:center; box-shadow:0 3px 14px rgba(61,32,16,.10); }
+  .michelada-opt-row::before { content:''; display:block; height:6px; background:#f39c12; border-radius:16px 16px 0 0; transition:height .18s; }
+  .michelada-opt-row:active { transform:scale(.96); }
+  .michelada-opt-row.selected { border-color:#f39c12; box-shadow:0 0 0 3px rgba(243,156,18,.22), 0 6px 20px rgba(61,32,16,.13); transform:translateY(-2px); }
+  .michelada-opt-row.selected::before { height:8px; }
+  .michelada-opt-inner { padding:10px 8px 12px; }
+  .michelada-opt-row .m-icon { font-size:1.8rem; margin-bottom:4px; display:block; line-height:1; }
+  .michelada-opt-row .m-name { font-weight:900; font-size:.82rem; color:var(--cafe); line-height:1.2; }
   .mc-desc { font-size:.64rem; color:#9a8070; margin-top:3px; line-height:1.3; }
   .mc-price { font-weight:800; font-size:.92rem; color:var(--verde-dark); margin-top:4px; }
-  #michelaCervezaOpts, #michelaPreparadoOpts, #michelaTipoOpts { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
-  #michelaCamaronOpts { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
+  #micheladaCervezaOpts, #micheladaPreparadoOpts, #micheladaTipoOpts { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+  #micheladaCamaronOpts { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
   .extra-row { display:flex; align-items:center; justify-content:space-between; background:#fff; border:2px solid var(--gris); border-radius:12px; padding:10px 14px; margin-bottom:8px; transition:all .18s; box-shadow:var(--sombra); }
   .extra-row.active { border-color:var(--verde); background:#f0fdf4; }
   .extra-left { display:flex; align-items:center; gap:10px; }
@@ -393,11 +393,11 @@
         <div class="sub">Camarón o pescado crocante</div>
       </div>
     </div>
-    <div class="opt-card" data-prep="Michelas" onclick="selectPrep(this,'Michelas')">
+    <div class="opt-card" data-prep="Micheladas" onclick="selectPrep(this,'Micheladas')">
       <div class="opt-card-inner" style="display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 18px;">
         <span class="icon" style="margin-bottom:0;font-size:2.2rem">🍺</span>
         <div style="text-align:left">
-          <div class="label">Michelas</div>
+          <div class="label">Micheladas</div>
           <div class="sub">Vasos preparados de cerveza · Victoria, Corona, Pacífico</div>
         </div>
       </div>
@@ -451,17 +451,17 @@
     </div>
   </div>
 
-  <!-- SECCIÓN MICHELAS -->
-  <div id="michelaSection" style="display:none">
+  <!-- SECCIÓN MICHELADAS -->
+  <div id="micheladaSection" style="display:none">
     <div class="sec-title">🍺 Elige tu cerveza</div>
-    <div id="michelaCervezaOpts"></div>
+    <div id="micheladaCervezaOpts"></div>
     <div class="sec-title">🥂 Preparado</div>
-    <div id="michelaPreparadoOpts"></div>
+    <div id="micheladaPreparadoOpts"></div>
     <div class="sec-title">🍤 Tipo</div>
-    <div id="michelaTipoOpts"></div>
-    <div id="michelaCamaronSection" style="display:none">
+    <div id="micheladaTipoOpts"></div>
+    <div id="micheladaCamaronSection" style="display:none">
       <div class="sec-title">🦐 Tipo de camarón</div>
-      <div id="michelaCamaronOpts"></div>
+      <div id="micheladaCamaronOpts"></div>
     </div>
   </div>
 
@@ -690,22 +690,22 @@ const TOSTOS_SABORES = {
   morado: {emoji:'💜', nombre:'Morado'},
 };
 
-const MICHELAS_CERVEZAS = [
+const MICHELADAS_CERVEZAS = [
   {key:'Victoria', icon:'🍺'},
   {key:'Corona',   icon:'🍺'},
   {key:'Pacífico', icon:'🍺'},
 ];
-const MICHELAS_PREPARADOS = [
+const MICHELADAS_PREPARADOS = [
   {key:'Chelada',       desc:'Sal y Limón'},
   {key:'Cielo Rojo',    desc:'Sal, Limón y Clamato'},
   {key:'Salsas Negras', desc:'Sal, Limón, Clamato y Salsas Negras'},
 ];
-const MICHELAS_TIPOS = [
+const MICHELADAS_TIPOS = [
   {key:'Sencilla',            precio:75,  camaron:false, icon:'🍺'},
   {key:'Con Camarón',         precio:150, camaron:true,  icon:'🦐'},
   {key:'Con Camarón y Pulpo', precio:180, camaron:true,  icon:'🦐🐙'},
 ];
-const MICHELAS_CAMARON = [
+const MICHELADAS_CAMARON = [
   {key:'Camarón cocido en limón', icon:'🍋'},
   {key:'Camarón cocido en agua',  icon:'💧'},
 ];
@@ -726,7 +726,7 @@ const ALL_EXTRAS = [...EXTRAS_LISTA, ...REFRESCOS_LISTA];
 let extrasQty = {};
 
 let state = {prep:null, sabor:null, nivel:null, tostosSabor:null, mariscos:[], size:null, qty:1,
-             michelaCerveza:null, michelaPreparado:null, michelaTipo:null, michelaCamaron:null};
+             micheladaCerveza:null, micheladaPreparado:null, micheladaTipo:null, micheladaCamaron:null};
 let cart = [];
 let entrega = null;
 let gpsCoords = null;
@@ -888,88 +888,88 @@ function renderMariscos(prep) {
   ).join('');
 }
 
-function renderMichelaSection() {
-  document.getElementById('michelaCervezaOpts').innerHTML = MICHELAS_CERVEZAS.map(c =>
-    `<div class="michela-opt-row" onclick="selectMichelaCerveza(this,'${c.key}')">
-      <div class="michela-opt-inner">
+function renderMicheladaSection() {
+  document.getElementById('micheladaCervezaOpts').innerHTML = MICHELADAS_CERVEZAS.map(c =>
+    `<div class="michelada-opt-row" onclick="selectMicheladaCerveza(this,'${c.key}')">
+      <div class="michelada-opt-inner">
         <span class="m-icon">${c.icon}</span>
         <div class="m-name">${c.key}</div>
       </div>
     </div>`).join('');
-  document.getElementById('michelaPreparadoOpts').innerHTML = MICHELAS_PREPARADOS.map(p =>
-    `<div class="michela-opt-row" onclick="selectMichelaPreparado(this,'${p.key}')">
-      <div class="michela-opt-inner">
+  document.getElementById('micheladaPreparadoOpts').innerHTML = MICHELADAS_PREPARADOS.map(p =>
+    `<div class="michelada-opt-row" onclick="selectMicheladaPreparado(this,'${p.key}')">
+      <div class="michelada-opt-inner">
         <span class="m-icon">🥂</span>
         <div class="m-name">${p.key}</div>
         <div class="mc-desc">${p.desc}</div>
       </div>
     </div>`).join('');
-  document.getElementById('michelaTipoOpts').innerHTML = MICHELAS_TIPOS.map(t =>
-    `<div class="michela-opt-row" onclick="selectMichelaTipo(this,'${t.key}')">
-      <div class="michela-opt-inner">
+  document.getElementById('micheladaTipoOpts').innerHTML = MICHELADAS_TIPOS.map(t =>
+    `<div class="michelada-opt-row" onclick="selectMicheladaTipo(this,'${t.key}')">
+      <div class="michelada-opt-inner">
         <span class="m-icon">${t.icon}</span>
         <div class="m-name">${t.key}</div>
         <div class="mc-price">$${t.precio}</div>
       </div>
     </div>`).join('');
-  document.getElementById('michelaCamaronOpts').innerHTML = MICHELAS_CAMARON.map(c =>
-    `<div class="michela-opt-row" onclick="selectMichelaCamaron(this,'${c.key}')">
-      <div class="michela-opt-inner">
+  document.getElementById('micheladaCamaronOpts').innerHTML = MICHELADAS_CAMARON.map(c =>
+    `<div class="michelada-opt-row" onclick="selectMicheladaCamaron(this,'${c.key}')">
+      <div class="michelada-opt-inner">
         <span class="m-icon">${c.icon}</span>
         <div class="m-name">${c.key}</div>
       </div>
     </div>`).join('');
 }
-function selectMichelaCerveza(el, val) {
-  document.querySelectorAll('#michelaCervezaOpts .michela-opt-row').forEach(r=>r.classList.remove('selected'));
-  el.classList.add('selected'); state.michelaCerveza = val; validate();
+function selectMicheladaCerveza(el, val) {
+  document.querySelectorAll('#micheladaCervezaOpts .michelada-opt-row').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected'); state.micheladaCerveza = val; validate();
 }
-function selectMichelaPreparado(el, val) {
-  document.querySelectorAll('#michelaPreparadoOpts .michela-opt-row').forEach(r=>r.classList.remove('selected'));
-  el.classList.add('selected'); state.michelaPreparado = val; validate();
+function selectMicheladaPreparado(el, val) {
+  document.querySelectorAll('#micheladaPreparadoOpts .michelada-opt-row').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected'); state.micheladaPreparado = val; validate();
 }
-function selectMichelaTipo(el, val) {
-  document.querySelectorAll('#michelaTipoOpts .michela-opt-row').forEach(r=>r.classList.remove('selected'));
+function selectMicheladaTipo(el, val) {
+  document.querySelectorAll('#micheladaTipoOpts .michelada-opt-row').forEach(r=>r.classList.remove('selected'));
   el.classList.add('selected');
-  state.michelaTipo = val; state.michelaCamaron = null;
-  const tipoData = MICHELAS_TIPOS.find(t => t.key === val);
-  document.getElementById('michelaCamaronSection').style.display = tipoData?.camaron ? 'block' : 'none';
-  document.querySelectorAll('#michelaCamaronOpts .michela-opt-row').forEach(r=>r.classList.remove('selected'));
+  state.micheladaTipo = val; state.micheladaCamaron = null;
+  const tipoData = MICHELADAS_TIPOS.find(t => t.key === val);
+  document.getElementById('micheladaCamaronSection').style.display = tipoData?.camaron ? 'block' : 'none';
+  document.querySelectorAll('#micheladaCamaronOpts .michelada-opt-row').forEach(r=>r.classList.remove('selected'));
   validate();
 }
-function selectMichelaCamaron(el, val) {
-  document.querySelectorAll('#michelaCamaronOpts .michela-opt-row').forEach(r=>r.classList.remove('selected'));
-  el.classList.add('selected'); state.michelaCamaron = val; validate();
+function selectMicheladaCamaron(el, val) {
+  document.querySelectorAll('#micheladaCamaronOpts .michelada-opt-row').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected'); state.micheladaCamaron = val; validate();
 }
 
 function selectPrep(el, val) {
   document.querySelectorAll('#screenBuild .card-grid .opt-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
   state = {prep:val, sabor:null, nivel:null, tostosSabor:null, mariscos:[], size:null, qty:1,
-           michelaCerveza:null, michelaPreparado:null, michelaTipo:null, michelaCamaron:null};
+           micheladaCerveza:null, micheladaPreparado:null, micheladaTipo:null, micheladaCamaron:null};
   document.getElementById('qtyDisplay').textContent = '1';
   updateSizeLabels();
   document.querySelectorAll('.marisco-row, .size-card').forEach(r=>r.classList.remove('selected'));
 
   const isAguachile      = val === 'Aguachile Mariposa' || val === 'Aguachile Botana';
   const isTacos          = val === 'Tacos Empanizados';
-  const isMichela        = val === 'Michelas';
+  const isMichelada        = val === 'Micheladas';
   const isOpcional       = val === 'Ceviche' || val === 'Tahitiana' || isTacos;
   const isTostiaguachile = val === 'Tostiaguachile';
-  const isPorPieza       = isTostiaguachile || isTacos || isMichela;
+  const isPorPieza       = isTostiaguachile || isTacos || isMichelada;
 
-  // Mostrar/ocultar sección michela vs sección mariscos normal
-  document.getElementById('mariscoTitle').style.display   = isMichela ? 'none' : 'block';
-  document.getElementById('mariscosOpts').style.display   = isMichela ? 'none' : 'block';
-  document.getElementById('michelaSection').style.display = isMichela ? 'block' : 'none';
-  if (isMichela) {
-    document.getElementById('michelaCamaronSection').style.display = 'none';
-    renderMichelaSection();
+  // Mostrar/ocultar sección michelada vs sección mariscos normal
+  document.getElementById('mariscoTitle').style.display   = isMichelada ? 'none' : 'block';
+  document.getElementById('mariscosOpts').style.display   = isMichelada ? 'none' : 'block';
+  document.getElementById('micheladaSection').style.display = isMichelada ? 'block' : 'none';
+  if (isMichelada) {
+    document.getElementById('micheladaCamaronSection').style.display = 'none';
+    renderMicheladaSection();
   } else {
     renderMariscos(val);
   }
 
-  document.getElementById('picorSection').style.display = isMichela ? 'none' : 'block';
+  document.getElementById('picorSection').style.display = isMichelada ? 'none' : 'block';
   document.getElementById('saborWrap').style.display = (isAguachile || isTostiaguachile) ? 'block' : 'none';
   document.getElementById('tostosWrap').style.display = isTostiaguachile ? 'block' : 'none';
   document.getElementById('picorOpcionalBadge').style.display = isOpcional ? 'inline-block' : 'none';
@@ -980,7 +980,7 @@ function selectPrep(el, val) {
   document.getElementById('sizeOpts').style.display = isPorPieza ? 'none' : 'grid';
   if (isPorPieza) { state.size = 'pieza'; }
 
-  if (!isMichela) {
+  if (!isMichelada) {
     renderSabores(isAguachile || isTostiaguachile);
     renderNiveles(true);
     if (isOpcional) {
@@ -1102,11 +1102,11 @@ function changeQty(delta) {
 }
 
 function validate() {
-  if (state.prep === 'Michelas') {
-    const tipoData = MICHELAS_TIPOS.find(t => t.key === state.michelaTipo);
-    const camaronOk = !tipoData?.camaron || !!state.michelaCamaron;
+  if (state.prep === 'Micheladas') {
+    const tipoData = MICHELADAS_TIPOS.find(t => t.key === state.micheladaTipo);
+    const camaronOk = !tipoData?.camaron || !!state.micheladaCamaron;
     document.getElementById('btnAddItem').disabled =
-      !(state.michelaCerveza && state.michelaPreparado && state.michelaTipo && camaronOk);
+      !(state.micheladaCerveza && state.micheladaPreparado && state.micheladaTipo && camaronOk);
     return;
   }
   const isAguachile      = state.prep === 'Aguachile Mariposa' || state.prep === 'Aguachile Botana';
@@ -1120,8 +1120,8 @@ function validate() {
 }
 
 function getUnitPrice() {
-  if (state.prep === 'Michelas') {
-    return MICHELAS_TIPOS.find(t => t.key === state.michelaTipo)?.precio || 0;
+  if (state.prep === 'Micheladas') {
+    return MICHELADAS_TIPOS.find(t => t.key === state.micheladaTipo)?.precio || 0;
   }
   const isTostiaguachile = state.prep === 'Tostiaguachile';
   const isTacos          = state.prep === 'Tacos Empanizados';
@@ -1147,34 +1147,34 @@ function getUnitPrice() {
 }
 
 function addToCart() {
-  if (state.prep === 'Michelas') {
+  if (state.prep === 'Micheladas') {
     const unitPrice = getUnitPrice();
     cart.push({
-      prep: 'Michela',
-      type: 'michela',
+      prep: 'Michelada',
+      type: 'michelada',
       picorDisplay: '', picorMsg: '', saborEnMsg: '',
       mariscos: [], size: 'pieza',
-      sizeLabel: state.michelaTipo,
+      sizeLabel: state.micheladaTipo,
       qty: state.qty, unitPrice, price: unitPrice * state.qty,
       notes: document.getElementById('notesInput').value.trim(),
-      michelaCerveza:   state.michelaCerveza,
-      michelaPreparado: state.michelaPreparado,
-      michelaTipo:      state.michelaTipo,
-      michelaCamaron:   state.michelaCamaron || '',
+      micheladaCerveza:   state.micheladaCerveza,
+      micheladaPreparado: state.micheladaPreparado,
+      micheladaTipo:      state.micheladaTipo,
+      micheladaCamaron:   state.micheladaCamaron || '',
     });
     state = {prep:null, sabor:null, nivel:null, tostosSabor:null, mariscos:[], size:null, qty:1,
-             michelaCerveza:null, michelaPreparado:null, michelaTipo:null, michelaCamaron:null};
-    document.querySelectorAll('.opt-card, .michela-opt-row, .marisco-row, .size-card, .sabor-card, .nivel-card').forEach(el=>el.classList.remove('selected'));
+             micheladaCerveza:null, micheladaPreparado:null, micheladaTipo:null, micheladaCamaron:null};
+    document.querySelectorAll('.opt-card, .michelada-opt-row, .marisco-row, .size-card, .sabor-card, .nivel-card').forEach(el=>el.classList.remove('selected'));
     document.getElementById('notesInput').value = '';
-    document.getElementById('michelaSection').style.display  = 'none';
-    document.getElementById('michelaCamaronSection').style.display = 'none';
+    document.getElementById('micheladaSection').style.display  = 'none';
+    document.getElementById('micheladaCamaronSection').style.display = 'none';
     document.getElementById('mariscoTitle').style.display    = 'block';
     document.getElementById('mariscosOpts').style.display    = 'block';
     document.getElementById('picorSection').style.display    = 'none';
     document.getElementById('qtyDisplay').textContent = '1';
     document.getElementById('btnAddItem').disabled = true;
     updateVerCarrito();
-    showToast('¡Michela agregada al carrito!');
+    showToast('¡Michelada agregada al carrito!');
     document.getElementById('totalAmount').textContent = `$${getGrandTotal().toFixed(2)}`;
     document.getElementById('totalBar').style.display = 'flex';
     document.getElementById('cartBadge').textContent = cart.length;
@@ -1354,10 +1354,10 @@ function renderCart() {
   document.querySelector('.btn-generar').style.cursor = '';
   el.innerHTML = cart.map((item,i) => {
     const qtyStr = item.qty > 1 ? ` ×${item.qty}` : '';
-    const detailTags = item.type === 'michela'
-      ? `<span class="tag">🍺 ${item.michelaCerveza}</span>
-         <span class="tag">🥂 ${item.michelaPreparado}</span>
-         <span class="tag">${item.sizeLabel}${item.michelaCamaron ? ' · ' + item.michelaCamaron : ''}</span>
+    const detailTags = item.type === 'michelada'
+      ? `<span class="tag">🍺 ${item.micheladaCerveza}</span>
+         <span class="tag">🥂 ${item.micheladaPreparado}</span>
+         <span class="tag">${item.sizeLabel}${item.micheladaCamaron ? ' · ' + item.micheladaCamaron : ''}</span>
          ${item.notes ? `<span class="tag">📝 ${item.notes}</span>` : ''}`
       : `<span class="tag">${item.sizeLabel}</span>
          <span class="tag">${item.mariscos.join(' + ')}</span>
@@ -1552,8 +1552,8 @@ function renderSummary() {
     <h3>🧾 Resumen del pedido</h3>
     ${cart.map(item => {
       const qtyStr = item.qty > 1 ? ` ×${item.qty}` : '';
-      const desc = item.type === 'michela'
-        ? `Michela ${item.michelaCerveza} — ${item.michelaPreparado} — ${item.sizeLabel}${item.michelaCamaron ? ' ('+item.michelaCamaron+')' : ''}${qtyStr}`
+      const desc = item.type === 'michelada'
+        ? `Michelada ${item.micheladaCerveza} — ${item.micheladaPreparado} — ${item.sizeLabel}${item.micheladaCamaron ? ' ('+item.micheladaCamaron+')' : ''}${qtyStr}`
         : `${item.prep} — ${item.mariscos.join('+')} (${item.sizeLabel}${qtyStr})${item.picorDisplay ? ' | '+item.picorDisplay : ''}`;
       return `<div class="summary-item">
         <span>${desc}</span>
@@ -1611,10 +1611,10 @@ function sendWhatsApp() {
   cart.forEach((item,i) => {
     const qtyStr = item.qty > 1 ? ` ×${item.qty}` : '';
     if (i > 0) msg += `\n`;
-    if (item.type === 'michela') {
-      msg += `${i+1}. *Michela${qtyStr}*\n`;
-      msg += `   🍺 ${item.michelaCerveza} | 🥂 ${item.michelaPreparado} | 🍤 ${item.michelaTipo}`;
-      if (item.michelaCamaron) msg += ` (${item.michelaCamaron})`;
+    if (item.type === 'michelada') {
+      msg += `${i+1}. *Michelada${qtyStr}*\n`;
+      msg += `   🍺 ${item.micheladaCerveza} | 🥂 ${item.micheladaPreparado} | 🍤 ${item.micheladaTipo}`;
+      if (item.micheladaCamaron) msg += ` (${item.micheladaCamaron})`;
       msg += ` | 💰 $${item.price.toFixed(2)}\n`;
     } else {
       msg += `${i+1}. *${item.prep}*${item.saborEnMsg ? ` ${item.saborEnMsg}` : ''}${qtyStr}\n`;
