@@ -94,6 +94,8 @@ Si ya había datos en `datos/`, muévelos a la nueva carpeta.
 2. **💲 Precios** → elige el producto nuevo → **🪄 Crear filas faltantes** → llena los precios de cada fila (incluida la de *Mixto*).
 3. **💾 Guardar y publicar**.
 
+> **Solo aparecen los mariscos que tienen precio.** Si un platillo no se vende con algún marisco, borra esa fila en Precios (o déjala sin precios) y el cliente no verá esa opción. El pulpo, que no se pide solo, aparece si el platillo tiene precio *Mixto*. Ejemplo: una ensalada con precios solo para *Camarón cocido en agua* y *Mixto* muestra Camarón cocido en agua y Pulpo; camarón solo cobra su precio y camarón + pulpo cobra el Mixto. Si una combinación de tamaño queda sin precio, la app avisa que no está disponible y no deja agregarla.
+
 ### Agregar una bebida o platillo sin opciones (ej. agua fresca)
 - **Opción A — como tarjeta en la pantalla principal:** en **Productos** agrega una fila con `flujo` = **simple** y `cobro` = **pieza**; en **Precios** elige el producto → **🪄 Crear filas faltantes** → pon el precio en *pieza*.
 - **Opción B — como extra en el carrito:** en **🛍️ Extras** agrega una fila con nombre, icono, precio y la `seccion` donde debe aparecer (ej. *Refrescos 600ml*).

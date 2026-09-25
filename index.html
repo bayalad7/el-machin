@@ -400,6 +400,9 @@
   <div class="sec-title">📝 Notas especiales</div>
   <textarea class="notes-box" id="notesInput" rows="3" placeholder="Ej: Unos tostios extras por favor, Sin pepino, extra chile, sin cilantro, con mucho cilantro..."></textarea>
 
+  <div id="sinPrecioHint" style="display:none;background:#fff5f0;border:1.5px solid var(--naranja);border-radius:10px;padding:8px 12px;font-size:.8rem;font-weight:700;color:var(--naranja-dark);margin:0 0 10px;">
+    😕 Esa combinación no está disponible. Prueba con otro tamaño o marisco.
+  </div>
   <button class="btn-add" id="btnAddItem" onclick="addToCart()" disabled>🛒 Agregar al carrito</button>
   <button class="btn-ver-carrito" id="btnVerCarrito" onclick="goTo(2)" style="display:none">🛒 Ver carrito (<span id="cartCount">0</span>)</button>
 </div>
@@ -767,8 +770,15 @@ function mariscosDe(prep) {
   const grupo = getProducto(prep)?.mariscos || 'general';
   return (MENU.mariscos||[]).filter(m => m.grupo === grupo && activo(m));
 }
+// Solo se ofrecen los mariscos que tienen precio para este producto. Los "solo_combinado"
+// (ej. Pulpo) se ofrecen si el producto tiene precio Mixto, porque solo se piden combinados.
+const tienePrecio = f => ['kg','lt','medio','pieza'].some(c => Number(f[c]) > 0);
+function mariscosDisponibles(prep) {
+  const conPrecio = new Set((MENU.precios||[]).filter(p => p.producto === prep && tienePrecio(p)).map(p => norm(p.marisco)));
+  return mariscosDe(prep).filter(m => conPrecio.has(norm(m.clave)) || (esSi(m.solo_combinado) && conPrecio.has('mixto')));
+}
 function renderMariscos(prep) {
-  document.getElementById('mariscosOpts').innerHTML = mariscosDe(prep).map(m =>
+  document.getElementById('mariscosOpts').innerHTML = mariscosDisponibles(prep).map(m =>
     `<div class="marisco-row" data-val="${esc(m.clave)}" onclick="toggleMarisco(this,this.dataset.val)">
       <div class="m-left"><span class="m-icon">${esc(m.icono)}</span><div><div class="m-name">${esc(m.etiqueta||m.clave)}</div></div></div>
       <div class="check-box">✓</div>
@@ -1006,7 +1016,11 @@ function validate() {
   const tostosOk   = f.tostitos ? !!state.tostosSabor : true;
   const nivelOk    = f.picor === 'no' ? true : !!state.nivel;
   const sizeOk     = f.porPieza ? true : !!state.size;
-  document.getElementById('btnAddItem').disabled = !(prod && mariscosOk && sizeOk && saborOk && tostosOk && nivelOk);
+  const completo = !!(prod && mariscosOk && sizeOk && saborOk && tostosOk && nivelOk);
+  // Una combinación sin precio en el menú no se puede agregar (evita artículos de $0.00)
+  const sinPrecio = completo && getUnitPrice() <= 0;
+  document.getElementById('sinPrecioHint').style.display = sinPrecio ? 'block' : 'none';
+  document.getElementById('btnAddItem').disabled = !completo || sinPrecio;
 }
 
 function getUnitPrice() {
