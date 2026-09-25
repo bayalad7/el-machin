@@ -626,6 +626,7 @@ function pintarPedidos() {
 function htmlPedido(p) {
   const fechaReg = new Date(p.fecha_registro).toLocaleString('es-MX', {dateStyle: 'short', timeStyle: 'short'});
   const entregaTxt = p.entrega === 'domicilio' ? '🛵 Domicilio' : '🏃 Recoger';
+  const conEnvio = tieneEnvio(p);
   const articulos = p.articulos.map(a => `<div class="linea"><div>${esc(a.descripcion || a.producto)}${a.notas ? `<div class="nota">📝 ${esc(a.notas)}</div>` : ''}</div><b>${dinero(a.subtotal)}</b></div>`).join('');
   const extras = p.extras.map(e => `<div class="linea"><div>${esc(e.nombre)}${e.cantidad > 1 ? ` ×${e.cantidad}` : ''}</div><b>${dinero(e.subtotal)}</b></div>`).join('');
   const gps = p.gps ? ` · <a href="https://maps.google.com/?q=${p.gps.lat},${p.gps.lng}" target="_blank">Ver mapa ↗</a>` : '';
@@ -637,20 +638,20 @@ function htmlPedido(p) {
         <div class="meta">📅 ${esc(p.fecha_texto || p.fecha_entrega)} ⏰ ${esc(p.hora)} · ${entregaTxt}${p.forma_pago ? ` · ${p.forma_pago === 'transferencia' ? '🏦 Transferencia' : '💵 Efectivo'}` : ''} · 💼 ${esc(p.operador)}${p.grupo ? ' · ' + esc(p.grupo) : ''}</div>
       </div>
       <div class="total">${dinero(p.total_final ?? p.total_calculado)}
-        ${p.envio ? `<div class="chip">🛵 incl. envío ${dinero(p.envio.tarifa)}</div>` : p.entrega === 'domicilio' ? '<div class="chip">🛵 envío pendiente</div>' : ''}
+        ${!conEnvio ? '' : p.envio ? `<div class="chip">🛵 incl. envío ${dinero(p.envio.tarifa)}</div>` : '<div class="chip">🛵 envío pendiente</div>'}
         ${p.diferencia ? '<div class="chip" style="color:var(--rojo)">⚠️ revisar</div>' : ''}</div>
     </div>
     <div class="pedido-detalle">
       ${p.diferencia ? `<div class="aviso">⚠️ El total que vio el cliente (${dinero(p.total_app)}) no coincide con los precios actuales (${dinero(p.total_calculado)}). Puede ser un cambio de precios reciente.</div>` : ''}
       ${articulos}${extras}
-      ${p.entrega === 'domicilio' ? `<p style="margin-top:10px">📍 ${esc(p.direccion)}${p.referencia ? ` — ${esc(p.referencia)}` : ''}${gps}</p>
-        <div class="envio-box" id="envio-${esc(p.folio)}"><div class="vacio" style="padding:10px">⏳ Cargando envío...</div></div>` : ''}
+      ${p.entrega === 'domicilio' ? `<p style="margin-top:10px">📍 ${esc(p.direccion)}${p.referencia ? ` — ${esc(p.referencia)}` : ''}${gps}</p>` : ''}
+      ${conEnvio ? `<div class="envio-box" id="envio-${esc(p.folio)}"><div class="vacio" style="padding:10px">⏳ Cargando envío...</div></div>` : ''}
       <div class="barra acciones-pedido" style="margin:12px 0 0">
         <label>Estado:</label> ${chipEstado(p.estado)}
         ${(ACCIONES_ESTADO[p.estado] || []).map(a =>
           `<button class="btn ${a.clase} btn-mini" onclick="cambiarEstado('${esc(p.folio)}','${a.estado}')">${a.boton}</button>`).join('')}
         <button class="btn btn-peligro btn-mini" onclick="eliminarPedido('${esc(p.folio)}')">🗑️ Eliminar pedido</button>
-        <a class="btn btn-claro btn-mini" href="https://wa.me/52${telDigits(p.cliente.telefono)}" target="_blank">💬 WhatsApp cliente</a>
+        <button class="btn btn-claro btn-mini" onclick="abrirWhatsApp('${telDigits(p.cliente.telefono)}')">💬 WhatsApp cliente</button>
       </div>
     </div>
   </div>`;
@@ -806,11 +807,14 @@ async function alternarLluvia() {
   toast(envioCfg.lluvia_activa ? '☔ Se propondrá la tarifa de lluvia' : '🌤️ Se propondrá la tarifa normal');
 }
 
+// La sección de envío solo aplica a pedidos a domicilio que no están cancelados
+const tieneEnvio = p => p?.entrega === 'domicilio' && p.estado !== 'cancelado';
+
 async function abrirPedido(folio) {
   const el = document.getElementById('p-' + folio);
   el.classList.toggle('abierto');
   const p = pedidos.find(x => x.folio === folio);
-  if (!el.classList.contains('abierto') || p?.entrega !== 'domicilio') return;
+  if (!el.classList.contains('abierto') || !tieneEnvio(p)) return;
   if (envioEdit[folio]) pintarEnvio(folio);
   else await iniciarEnvio(p);
 }
@@ -894,8 +898,8 @@ function pintarEnvio(folio) {
     <div class="barra" style="margin-bottom:0">
       <button class="btn btn-primario btn-mini" onclick="guardarEnvio('${f}')">💾 Guardar envío y total</button>
       <button class="btn btn-claro btn-mini" onclick="copiarTexto(mensajeRepartidor('${f}'))">📋 Copiar mensaje</button>
-      <a class="btn btn-claro btn-mini" target="_blank" href="https://wa.me/?text=${encodeURIComponent(mensajeRepartidor(folio))}">🛵 Enviar al repartidor</a>
-      <a class="btn btn-claro btn-mini" target="_blank" href="https://wa.me/52${telDigits(p.cliente.telefono)}?text=${encodeURIComponent(mensajeCliente(p, e))}">💬 Avisar total al cliente</a>
+      <button class="btn btn-claro btn-mini" onclick="abrirWhatsApp('', mensajeRepartidor('${f}'))">🛵 Enviar al repartidor</button>
+      <button class="btn btn-claro btn-mini" onclick="avisarCliente('${f}')">💬 Avisar total al cliente</button>
     </div>`;
 }
 
@@ -935,6 +939,25 @@ async function guardarEnvio(folio) {
   document.getElementById('p-' + folio)?.classList.add('abierto');
   pintarEnvio(folio);
   toast(`✅ Envío guardado. Total del pedido: ${dinero(r.total_final)}`);
+}
+
+// Abre WhatsApp con el texto. En computadora usa web.whatsapp.com directo: wa.me redirige a
+// api.whatsapp.com, que rompe los emojis (salen como �) y a veces duplica el texto.
+// Mismo criterio que sendWhatsApp() en index.html. Sin teléfono, WhatsApp pide elegir el chat.
+function abrirWhatsApp(tel10, texto = '') {
+  const movil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const phone = tel10 ? '52' + tel10 : '';
+  const q = texto ? encodeURIComponent(texto) : '';
+  const url = movil
+    ? `https://wa.me/${phone}${q ? '?text=' + q : ''}`
+    : `https://web.whatsapp.com/send?${phone ? 'phone=' + phone + '&' : ''}text=${q}`;
+  const win = window.open(url, '_blank');
+  if (!win) window.location.href = url;
+}
+
+function avisarCliente(folio) {
+  const p = pedidos.find(x => x.folio === folio);
+  abrirWhatsApp(telDigits(p.cliente.telefono), mensajeCliente(p, envioEdit[folio]));
 }
 
 async function copiarTexto(texto) {
