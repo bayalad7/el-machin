@@ -1,0 +1,8 @@
+# Datos del servidor (menú editado por el admin, respaldos y pedidos)
+datos/*
+!datos/.htaccess
+
+# Configuración local con la contraseña del admin
+api/config.local.php
+
+desktop.ini
