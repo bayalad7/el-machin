@@ -645,14 +645,12 @@ function htmlPedido(p) {
       ${articulos}${extras}
       ${p.entrega === 'domicilio' ? `<p style="margin-top:10px">📍 ${esc(p.direccion)}${p.referencia ? ` — ${esc(p.referencia)}` : ''}${gps}</p>
         <div class="envio-box" id="envio-${esc(p.folio)}"><div class="vacio" style="padding:10px">⏳ Cargando envío...</div></div>` : ''}
-      <div class="barra" style="margin-top:12px">
+      <div class="barra acciones-pedido" style="margin:12px 0 0">
         <label>Estado:</label> ${chipEstado(p.estado)}
         ${(ACCIONES_ESTADO[p.estado] || []).map(a =>
           `<button class="btn ${a.clase} btn-mini" onclick="cambiarEstado('${esc(p.folio)}','${a.estado}')">${a.boton}</button>`).join('')}
-      </div>
-      <div class="barra" style="margin-bottom:0">
-        <a class="btn btn-claro btn-mini" href="https://wa.me/52${telDigits(p.cliente.telefono)}" target="_blank">💬 WhatsApp cliente</a>
         <button class="btn btn-peligro btn-mini" onclick="eliminarPedido('${esc(p.folio)}')">🗑️ Eliminar pedido</button>
+        <a class="btn btn-claro btn-mini" href="https://wa.me/52${telDigits(p.cliente.telefono)}" target="_blank">💬 WhatsApp cliente</a>
       </div>
     </div>
   </div>`;
